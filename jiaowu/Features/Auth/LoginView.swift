@@ -94,31 +94,27 @@ private struct LoginBackdrop: View {
 
 private struct LoginBrandPanel: View {
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack {
             Circle()
                 .fill(Color.white.opacity(0.10))
                 .frame(width: 560, height: 560)
                 .offset(x: -220, y: 140)
 
-            VStack(alignment: .leading, spacing: 18) {
-                Spacer()
-                HStack(spacing: 16) {
-                    Image("LoginLogo")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 78, height: 78)
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(Color.white.opacity(0.38), lineWidth: 1)
-                        )
-                    Text("时光空间")
-                        .font(.system(size: 56, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-                Spacer()
-                    .frame(height: 92)
+            HStack(spacing: 16) {
+                Image("LoginLogo")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 78, height: 78)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.white.opacity(0.38), lineWidth: 1)
+                    )
+                Text("时光空间")
+                    .font(.system(size: 56, weight: .bold))
+                    .foregroundStyle(.white)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.horizontal, 52)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
