@@ -15,149 +15,47 @@ struct ContentView: View {
     }
 }
 
-private struct LoginView: View {
-    @Environment(AppStore.self) private var store
-    @State private var selectedCampusID: UUID?
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                JWColor.appBackground
-                    .ignoresSafeArea()
-                VStack(alignment: .leading, spacing: 28) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 12) {
-                                Image(systemName: "rectangle.3.group.fill")
-                                    .font(.system(size: 28, weight: .semibold))
-                                    .foregroundStyle(JWColor.primary)
-                                Text("Jiaowu Desk")
-                                    .font(.system(size: 28, weight: .bold))
-                            }
-                            Text("面向校区老师的横屏 iPad 高效工作台")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(JWColor.textMuted)
-                        }
-                        Spacer()
-                        Text("Mock")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(JWColor.accent)
-                            .padding(.horizontal, 12)
-                            .frame(height: 30)
-                            .background(JWColor.accent.opacity(0.10))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-
-                    HStack(alignment: .top, spacing: 24) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(.white)
-                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(JWColor.divider))
-                            VStack(spacing: 12) {
-                                Image(systemName: "qrcode")
-                                    .font(.system(size: 120, weight: .regular))
-                                    .foregroundStyle(JWColor.text)
-                                Text("钉钉扫码占位")
-                                    .font(.system(size: 18, weight: .bold))
-                                Text("本地数据原型，点击进入即可开始")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(JWColor.textMuted)
-                            }
-                        }
-                        .frame(width: 340, height: 340)
-
-                        VStack(alignment: .leading, spacing: 18) {
-                            Text("选择工作校区")
-                                .font(.system(size: 22, weight: .bold))
-                            VStack(spacing: 10) {
-                                ForEach(store.campuses) { campus in
-                                    Button {
-                                        selectedCampusID = campus.id
-                                    } label: {
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(campus.name)
-                                                    .font(.system(size: 18, weight: .bold))
-                                                Text("\(campus.rooms.count) 间教室 · 本地演示数据")
-                                                    .font(.system(size: 13, weight: .medium))
-                                                    .foregroundStyle(JWColor.textMuted)
-                                            }
-                                            Spacer()
-                                            Image(systemName: (selectedCampusID == campus.id || (selectedCampusID == nil && campus.id == store.campuses.first?.id)) ? "checkmark.circle.fill" : "circle")
-                                                .font(.system(size: 22, weight: .semibold))
-                                                .foregroundStyle(JWColor.primary)
-                                        }
-                                        .padding(16)
-                                        .background(.white)
-                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(JWColor.divider))
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            PrimaryButton(title: "进入工作台", systemImage: "arrow.right") {
-                                let campus = store.campuses.first { $0.id == selectedCampusID } ?? store.campuses[0]
-                                store.login(campus: campus)
-                            }
-                            HStack(spacing: 12) {
-                                LoginMetric(title: "待办", value: "18")
-                                LoginMetric(title: "测试班", value: "1")
-                                LoginMetric(title: "学员", value: "\(store.students.count)")
-                            }
-                        }
-                    }
-                }
-                .padding(32)
-                .frame(width: min(proxy.size.width - 120, 980))
-                .background(.white.opacity(0.86))
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(.white))
-                .shadow(color: .black.opacity(0.08), radius: 34, x: 0, y: 20)
-            }
-        }
-    }
-}
-
-private struct LoginMetric: View {
-    var title: String
-    var value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(value)
-                .font(.system(size: 24, weight: .bold))
-                .monospacedDigit()
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(JWColor.textMuted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(JWColor.surfaceMuted)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
 private struct AppShell: View {
     @Environment(AppStore.self) private var store
+    @State private var isSidebarCollapsed = false
 
     var body: some View {
         ZStack(alignment: .top) {
-            JWColor.appBackground.ignoresSafeArea()
-            HStack(spacing: 16) {
-                SidebarView()
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.70, green: 0.74, blue: 0.95),
+                        Color(red: 0.80, green: 0.82, blue: 0.95),
+                        JWColor.appBackground,
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Circle()
+                    .fill(JWColor.primary.opacity(0.12))
+                    .frame(width: 520, height: 520)
+                    .offset(x: -420, y: -320)
+                Circle()
+                    .fill(Color.white.opacity(0.45))
+                    .frame(width: 600, height: 600)
+                    .offset(x: 450, y: -260)
+            }
+            .ignoresSafeArea()
+
+            HStack(spacing: 10) {
+                SidebarView(isCollapsed: $isSidebarCollapsed)
                 VStack(spacing: 0) {
                     TopBarView()
                     ScrollView {
                         routeView
-                            .padding(20)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
                     }
                     .scrollIndicators(.hidden)
                 }
-                .background(JWColor.appBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             }
-            .padding(16)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
 
             if let toast = store.toast {
                 Text(toast)
@@ -169,6 +67,10 @@ private struct AppShell: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.top, 18)
                     .onTapGesture { store.toast = nil }
+            }
+
+            if store.shouldPresentCampusDialog {
+                CampusPickDialog()
             }
         }
         .onChange(of: store.toast) { _, newValue in
@@ -194,47 +96,148 @@ private struct AppShell: View {
     }
 }
 
-private struct SidebarView: View {
+private struct CampusPickDialog: View {
     @Environment(AppStore.self) private var store
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
 
     var body: some View {
-        VStack(spacing: 14) {
-            VStack(spacing: 8) {
-                Image(systemName: "rectangle.3.group.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(JWColor.primary)
-                    .frame(width: 52, height: 52)
-                    .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                Text("教务")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(JWColor.textMuted)
+        ZStack {
+            Color.black.opacity(0.22)
+                .ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("请选择工作校区")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(JWColor.text)
+                    Spacer()
+                    Button {
+                        store.shouldPresentCampusDialog = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(JWColor.textMuted)
+                            .frame(width: 30, height: 30)
+                            .background(JWColor.surfaceMuted)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 10) {
+                        ForEach(store.campuses) { campus in
+                            CampusGridItem(
+                                name: campus.name,
+                                isSelected: store.pendingCampusSelectionID == campus.id
+                            ) {
+                                store.pendingCampusSelectionID = campus.id
+                            }
+                        }
+                    }
+                }
+                .frame(maxHeight: 360)
+
+                PrimaryButton(title: "确认选择", systemImage: "checkmark") {
+                    store.confirmPendingCampusSelection()
+                }
+                .opacity(store.pendingCampusSelectionID == nil ? 0.55 : 1)
+                .allowsHitTesting(store.pendingCampusSelectionID != nil)
             }
-            .padding(.top, 18)
+            .padding(20)
+            .frame(width: 760)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(JWColor.divider))
+            .shadow(color: .black.opacity(0.1), radius: 22, x: 0, y: 10)
+        }
+    }
+}
+
+private struct CampusGridItem: View {
+    var name: String
+    var isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(JWColor.text)
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(JWColor.primary)
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 48)
+            .background(isSelected ? JWColor.primaryLight : JWColor.surfaceMuted)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct SidebarView: View {
+    @Environment(AppStore.self) private var store
+    @Binding var isCollapsed: Bool
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Group {
+                if isCollapsed {
+                    VStack(spacing: 6) {
+                        Image("DefaultAvatar")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 44, height: 44)
+                            .clipShape(Circle())
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 10) {
+                            Image("DefaultAvatar")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                            Text(store.currentStaff?.name ?? "教务老师")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(JWColor.text)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                }
+            }
+            .padding(.top, 12)
 
             VStack(spacing: 4) {
                 ForEach(AppRoute.allCases) { route in
                     Button {
                         store.navigate(route)
                     } label: {
-                        ZStack(alignment: .leading) {
-                            if store.route == route {
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(JWColor.primary)
-                                    .frame(width: 4, height: 38)
-                                    .offset(x: -10)
-                            }
+                        HStack(spacing: 10) {
                             VStack(spacing: 5) {
                                 Image(systemName: route.symbol)
-                                    .font(.system(size: 22, weight: .semibold))
-                                Text(route.rawValue)
-                                    .font(.system(size: 11, weight: .semibold))
+                                    .font(.system(size: 17, weight: .medium))
+                                    .symbolRenderingMode(.hierarchical)
                             }
-                            .frame(width: 72, height: 58)
+                            .frame(width: 44, height: 44)
                             .foregroundStyle(store.route == route ? JWColor.primary : JWColor.textMuted)
-                            .background(store.route == route ? .white : .clear)
+                            .background(store.route == route ? JWColor.primaryLight : Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            if !isCollapsed {
+                                Text(route.rawValue)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text)
+                                Spacer(minLength: 0)
+                            }
                         }
+                        .padding(.horizontal, isCollapsed ? 0 : 6)
                     }
                     .buttonStyle(.plain)
                 }
@@ -243,27 +246,59 @@ private struct SidebarView: View {
             Button {
                 store.toast = "扫码页为前端占位"
             } label: {
-                Image(systemName: "qrcode.viewfinder")
-                    .font(.system(size: 26, weight: .semibold))
-                    .frame(width: 64, height: 50)
+                HStack(spacing: 10) {
+                    Image(systemName: "qrcode.viewfinder")
+                        .font(.system(size: 22, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                    if !isCollapsed {
+                        Text("扫码")
+                            .font(.system(size: 15, weight: .semibold))
+                        Spacer(minLength: 0)
+                    }
+                }
+                .padding(.horizontal, isCollapsed ? 0 : 6)
             }
             .buttonStyle(.plain)
             Button {
                 store.isLoggedIn = false
             } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 26, weight: .bold))
-                    .frame(width: 64, height: 44)
+                HStack(spacing: 10) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 22, weight: .bold))
+                        .frame(width: 44, height: 40)
+                    if !isCollapsed {
+                        Text("退出登录")
+                            .font(.system(size: 15, weight: .semibold))
+                        Spacer(minLength: 0)
+                    }
+                }
+                .padding(.horizontal, isCollapsed ? 0 : 6)
+            }
+            .buttonStyle(.plain)
+            Button {
+                isCollapsed.toggle()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: isCollapsed ? "sidebar.leading" : "sidebar.left")
+                        .font(.system(size: 20, weight: .semibold))
+                        .frame(width: 44, height: 40)
+                    if !isCollapsed {
+                        Text(isCollapsed ? "展开侧栏" : "收起侧栏")
+                            .font(.system(size: 15, weight: .semibold))
+                        Spacer(minLength: 0)
+                    }
+                }
+                .padding(.horizontal, isCollapsed ? 0 : 6)
             }
             .buttonStyle(.plain)
         }
         .foregroundStyle(JWColor.text)
-        .frame(width: 96)
+        .frame(width: isCollapsed ? 72 : 188)
         .frame(maxHeight: .infinity)
-        .background(.white.opacity(0.88))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(JWColor.divider))
-        .shadow(color: .black.opacity(0.05), radius: 18, x: 0, y: 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.62), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: 10)
     }
 }
 
@@ -274,10 +309,10 @@ private struct TopBarView: View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text(store.route.rawValue)
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(JWColor.text)
-                Text("校区老师 · \(store.currentStaff?.name ?? "纵强强")")
-                    .font(.system(size: 13, weight: .semibold))
+                Text("校区老师 · \(store.currentStaff?.name ?? "许艳博")")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(JWColor.textMuted)
             }
             Spacer()
@@ -289,471 +324,24 @@ private struct TopBarView: View {
             }
             .font(.system(size: 14, weight: .medium))
             .padding(.horizontal, 14)
-            .frame(width: 360, height: 46)
-            .background(JWColor.surfaceMuted)
+            .frame(width: 350, height: 46)
+            .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(JWColor.divider))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.58)))
             HStack(spacing: 12) {
                 Label("2026-05-07 周四", systemImage: "calendar")
                 Label(store.currentCampus?.name ?? "XiangShuW", systemImage: "mappin.and.ellipse")
             }
-            .font(.system(size: 15, weight: .semibold))
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(JWColor.textMuted)
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 12)
         .frame(height: 78)
-        .background(.white.opacity(0.82))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(.ultraThinMaterial)
         .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
-        .padding(.horizontal, 6)
-        .padding(.top, 2)
-    }
-}
-
-private struct WorkspaceView: View {
-    @Environment(AppStore.self) private var store
-
-    var body: some View {
-        VStack(spacing: 18) {
-            HStack {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("今日运营概览")
-                        .font(.system(size: 20, weight: .bold))
-                    Text("面向校区老师的待办队列，优先处理异常、签到和批改。")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(JWColor.textMuted)
-                }
-                Spacer()
-                HStack(spacing: 10) {
-                    SecondaryButton(title: "扫码", systemImage: "qrcode.viewfinder") { store.toast = "扫码页为前端占位" }
-                    PrimaryButton(title: "快速报名", systemImage: "plus") { store.navigate(.courseSelection) }
-                        .frame(width: 150)
-                }
-            }
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 4), spacing: 14) {
-                MetricCard(title: "今日测试班", value: "\(store.testSessions.count)", tint: JWColor.primary, systemImage: "doc.text")
-                MetricCard(title: "未签到预警", value: "\(store.unpaidAttendanceCount)", tint: JWColor.danger, systemImage: "exclamationmark.triangle")
-                MetricCard(title: "待批改", value: "\(store.pendingReviewCount)", tint: JWColor.warning, systemImage: "pencil.and.outline")
-                MetricCard(title: "可退款订单", value: "\(store.paidOrders.count)", tint: JWColor.success, systemImage: "creditcard")
-            }
-
-            HStack(alignment: .top, spacing: 16) {
-                AppCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        SectionTitle(title: "实时场次", actionTitle: "课表") { store.navigate(.schedule) }
-                        ForEach(store.testSessions) { session in
-                            Button {
-                                store.selectedTestSessionID = session.id
-                                store.navigate(.schedule)
-                            } label: {
-                                TestSessionRow(session: session)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                AppCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        SectionTitle(title: "处理队列", actionTitle: "测评") { store.navigate(.assessment) }
-                        VStack(spacing: 10) {
-                            TaskRow(title: "试卷人工复核", detail: "\(store.pendingReviewCount) 名学员存在 OCR/AI 待判题", tint: JWColor.warning)
-                            TaskRow(title: "未打卡提醒", detail: "\(store.unpaidAttendanceCount) 条考勤需要处理", tint: JWColor.danger)
-                            TaskRow(title: "退款确认", detail: "\(store.paidOrders.count) 笔已付款订单可发起退款", tint: JWColor.success)
-                        }
-                    }
-                }
-                .frame(width: 430)
-            }
-        }
-    }
-}
-
-private struct TaskRow: View {
-    var title: String
-    var detail: String
-    var tint: Color
-
-    var body: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 3).fill(tint).frame(width: 6, height: 42)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 16, weight: .bold))
-                Text(detail).font(.system(size: 14, weight: .medium)).foregroundStyle(JWColor.textMuted)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundStyle(JWColor.textMuted)
-        }
-        .padding(12)
-        .background(.white)
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(JWColor.divider))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-}
-
-private struct TestSessionRow: View {
-    var session: TestSession
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        StatusBadge(title: "测试", tint: JWColor.accent)
-                        Text(session.title)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(JWColor.text)
-                            .lineLimit(1)
-                    }
-                    HStack(spacing: 16) {
-                        Label(session.time, systemImage: "clock")
-                        Label(session.grade, systemImage: "graduationcap")
-                        Label(session.room, systemImage: "building.2")
-                        Label(session.subject, systemImage: "book")
-                    }
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(JWColor.textMuted)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(JWColor.textMuted)
-            }
-            HStack(spacing: 10) {
-                InlineMetric(label: "已报", value: "\(session.seats.count)")
-                InlineMetric(label: "已到", value: "\(session.seats.filter(\.studentCheckedIn).count)")
-                InlineMetric(label: "家长", value: "\(session.seats.filter(\.parentCheckedIn).count)")
-                StatusBadge(title: session.status, tint: JWColor.warning)
-            }
-        }
-        .padding(16)
-        .background(.white)
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(JWColor.divider))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-}
-
-private struct InlineMetric: View {
-    var label: String
-    var value: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(value)
-                .font(.system(size: 18, weight: .bold))
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(JWColor.textMuted)
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 32)
-        .background(JWColor.surfaceMuted)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-private struct StudentsView: View {
-    @Environment(AppStore.self) private var store
-    @State private var search = ""
-    @State private var tab = "在读课程"
-    @State private var showAddStudent = false
-    @State private var showAddLevel = false
-    @State private var showCredit = false
-
-    var filteredStudents: [Student] {
-        if search.isEmpty { return store.students }
-        return store.students.filter { $0.name.localizedStandardContains(search) || $0.number.contains(search) || $0.phone.contains(search) }
-    }
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 14) {
-                HStack {
-                    Text("学员目录")
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Button {
-                        showAddStudent = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(JWColor.primary)
-                }
-                SearchField(placeholder: "搜索学员、编号、手机号", text: $search)
-                ScrollView {
-                    VStack(spacing: 6) {
-                        ForEach(filteredStudents) { student in
-                            StudentListRow(student: student, selected: store.selectedStudentID == student.id) {
-                                store.selectedStudentID = student.id
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(14)
-            .background(.white)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .frame(width: 340)
-
-            if let student = store.selectedStudent {
-                VStack(spacing: 14) {
-                    AppCard {
-                        StudentProfileHeader(student: student, showCredit: { showCredit = true }, showAddLevel: { showAddLevel = true })
-                    }
-                    AppCard {
-                        HStack {
-                            ForEach(["在读课程", "订单", "测试级别", "信用分", "记录"], id: \.self) { item in
-                                FilterChip(title: item, isSelected: tab == item) { tab = item }
-                            }
-                            Spacer()
-                        }
-                        .padding(.bottom, 8)
-                        StudentDetailTab(tab: tab, student: student)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .top)
-            } else {
-                EmptyStateView()
-            }
-        }
-        .overlay {
-            if showAddStudent {
-                AddStudentModal(close: { showAddStudent = false })
-            }
-            if showAddLevel, let student = store.selectedStudent {
-                AddLevelModal(student: student, close: { showAddLevel = false })
-            }
-            if showCredit, let student = store.selectedStudent {
-                CreditModal(student: student, close: { showCredit = false })
-            }
-        }
-    }
-}
-
-private struct StudentListRow: View {
-    var student: Student
-    var selected: Bool
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Text(String(student.name.prefix(1)))
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(width: 36, height: 36)
-                    .background(selected ? .white.opacity(0.18) : JWColor.surfaceMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(student.name).font(.system(size: 16, weight: .bold))
-                    Text("\(student.grade) · \(student.number)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(selected ? .white.opacity(0.78) : JWColor.textMuted)
-                }
-                Spacer()
-            }
-            .foregroundStyle(selected ? .white : JWColor.text)
-            .padding(12)
-            .background(selected ? JWColor.rail : .white)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(selected ? Color.clear : JWColor.divider))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct StudentProfileHeader: View {
-    var student: Student
-    var showCredit: () -> Void
-    var showAddLevel: () -> Void
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 18) {
-            Text(String(student.name.prefix(1)))
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 64, height: 64)
-                .background(JWColor.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 10) {
-                    Text(student.name)
-                        .font(.system(size: 24, weight: .bold))
-                    StatusBadge(title: student.grade, tint: JWColor.primary)
-                    StatusBadge(title: student.gender.rawValue, tint: JWColor.textMuted)
-                }
-                HStack(spacing: 22) {
-                    InfoPill(label: "NO", value: student.number)
-                    InfoPill(label: "电话", value: student.phone)
-                    InfoPill(label: "学校", value: student.school)
-                    InfoPill(label: "信用", value: "\(student.creditScore)")
-                }
-            }
-            Spacer()
-            HStack(spacing: 10) {
-                SecondaryButton(title: "信用明细", systemImage: "list.bullet.rectangle", action: showCredit)
-                PrimaryButton(title: "添加成绩", systemImage: "plus", action: showAddLevel)
-                    .frame(width: 130)
-            }
-        }
-    }
-}
-
-private struct InfoPill: View {
-    var label: String
-    var value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.system(size: 12, weight: .semibold)).foregroundStyle(JWColor.textMuted)
-            Text(value).font(.system(size: 15, weight: .bold)).foregroundStyle(JWColor.text)
-        }
-    }
-}
-
-private struct StudentDetailTab: View {
-    @Environment(AppStore.self) private var store
-    var tab: String
-    var student: Student
-
-    var body: some View {
-        VStack(spacing: 12) {
-            switch tab {
-            case "在读课程":
-                let rows = store.enrollments.filter { $0.studentID == student.id }
-                if rows.isEmpty { EmptyStateView(title: "暂无在读课程") } else {
-                    ForEach(rows) { enrollment in
-                        RecordRow(title: store.courses.first { $0.id == enrollment.courseID }?.title ?? "课程", detail: "状态：\(enrollment.status) · 报名日期：\(enrollment.createdAt)", trailing: "修改  转班  退课")
-                    }
-                }
-            case "订单":
-                ForEach(store.orders.filter { $0.studentID == student.id }) { order in
-                    RecordRow(title: order.courseTitle, detail: "\(order.classTitle) · \(order.paidAt)", trailing: order.status.rawValue)
-                }
-            case "测试级别":
-                if student.testLevels.isEmpty { EmptyStateView(title: "暂无测试级别") } else {
-                    ForEach(student.testLevels) { level in
-                        RecordRow(title: "\(level.grade) · \(level.subject)", detail: "分数 \(level.score) · 级别 \(level.level)", trailing: level.source)
-                    }
-                }
-            case "信用分":
-                ForEach(store.creditRecords.filter { $0.studentID == student.id }) { record in
-                    RecordRow(title: "\(record.delta > 0 ? "+" : "")\(record.delta)  \(record.title)", detail: record.dateText, trailing: record.canUndo ? "撤销" : "")
-                }
-            default:
-                ForEach(store.attendanceRecords.filter { $0.studentID == student.id }) { record in
-                    RecordRow(title: record.classTitle, detail: "\(record.time) · \(record.status)", trailing: record.hasVisit ? "已回访" : "添加回访")
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .frame(minHeight: 440, alignment: .top)
-    }
-}
-
-private struct RecordRow: View {
-    var title: String
-    var detail: String
-    var trailing: String
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(.system(size: 17, weight: .bold))
-                Text(detail).font(.system(size: 14, weight: .medium)).foregroundStyle(JWColor.textMuted)
-            }
-            Spacer()
-            if !trailing.isEmpty {
-                Text(trailing)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(JWColor.primary)
-            }
-        }
-        .padding(14)
-        .background(.white)
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(JWColor.divider))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-    }
-}
-
-private struct AddStudentModal: View {
-    @Environment(AppStore.self) private var store
-    @State private var name = ""
-    @State private var phone = ""
-    @State private var grade = "一年级"
-    @State private var gender: Gender = .male
-    var close: () -> Void
-
-    var body: some View {
-        ModalShell(title: "新增学员", close: close) {
-            VStack(spacing: 14) {
-                TextField("姓名", text: $name).textFieldStyle(.roundedBorder)
-                TextField("电话", text: $phone).textFieldStyle(.roundedBorder)
-                Picker("年级", selection: $grade) {
-                    ForEach(["一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "初一", "初二", "初三", "高一", "高二", "高三"], id: \.self, content: Text.init)
-                }
-                Picker("性别", selection: $gender) {
-                    ForEach(Gender.allCases) { Text($0.rawValue).tag($0) }
-                }
-                HStack {
-                    SecondaryButton(title: "取消", action: close)
-                    PrimaryButton(title: "保存学员") {
-                        store.addStudent(name: name, phone: phone, grade: grade, gender: gender)
-                        close()
-                    }
-                }
-            }
-        }
-    }
-}
-
-private struct AddLevelModal: View {
-    @Environment(AppStore.self) private var store
-    var student: Student
-    var close: () -> Void
-    @State private var grade = "二年级"
-    @State private var subject = "信息学算法"
-    @State private var score = 80
-    @State private var level = "A"
-
-    var body: some View {
-        ModalShell(title: "新增学员级别", close: close) {
-            VStack(spacing: 14) {
-                Picker("年级", selection: $grade) { ForEach(["一年级", "二年级", "三年级", "四年级", "五年级", "六年级"], id: \.self, content: Text.init) }
-                Picker("学科", selection: $subject) { ForEach(["信息学算法", "信息学实验P", "信息学实验C", "信息学语言传播"], id: \.self, content: Text.init) }
-                Stepper("分数：\(score)", value: $score, in: 0...100)
-                Picker("级别", selection: $level) { ForEach(["A", "B", "C", "无"], id: \.self, content: Text.init) }
-                HStack {
-                    SecondaryButton(title: "取消", action: close)
-                    PrimaryButton(title: "保存") {
-                        store.addLevel(to: student.id, grade: grade, subject: subject, score: score, level: level)
-                        close()
-                    }
-                }
-            }
-        }
-    }
-}
-
-private struct CreditModal: View {
-    @Environment(AppStore.self) private var store
-    var student: Student
-    var close: () -> Void
-
-    var body: some View {
-        ModalShell(title: "信用分明细", close: close) {
-            VStack(alignment: .leading, spacing: 12) {
-                StatusBadge(title: "当前信用分 \(student.creditScore) 分", tint: JWColor.success)
-                ForEach(store.creditRecords.filter { $0.studentID == student.id }) { record in
-                    RecordRow(title: "\(record.delta > 0 ? "+" : "")\(record.delta)", detail: "\(record.dateText)  \(record.title)", trailing: record.canUndo ? "撤销" : "")
-                }
-            }
-        }
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.58), lineWidth: 1))
+        .padding(.bottom, 6)
     }
 }
 
@@ -777,7 +365,7 @@ private struct CourseSelectionView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 14) {
             CourseFilters(selectedGrade: $selectedGrade, selectedYear: $selectedYear, selectedType: $selectedType, selectedSubject: $selectedSubject)
             HStack(alignment: .top, spacing: 16) {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 2), spacing: 14) {
@@ -790,25 +378,27 @@ private struct CourseSelectionView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                AppCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        SectionTitle(title: "班级选择")
-                        if let course = store.selectedCourse {
-                            Text(course.title).font(.system(size: 18, weight: .bold))
-                            ForEach(course.classes) { klass in
-                                Button {
-                                    store.selectedClassID = klass.id
-                                } label: {
-                                    ClassChoiceRow(klass: klass, selected: store.selectedClassID == klass.id)
-                                }
-                                .buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: 14) {
+                    SectionTitle(title: "班级选择")
+                    if let course = store.selectedCourse {
+                        Text(course.title).font(.system(size: 18, weight: .bold))
+                        ForEach(course.classes) { klass in
+                            Button {
+                                store.selectedClassID = klass.id
+                            } label: {
+                                ClassChoiceRow(klass: klass, selected: store.selectedClassID == klass.id)
                             }
-                            PrimaryButton(title: "选择学员并报名", systemImage: "person.badge.plus") {
-                                showStudentPicker = true
-                            }
+                            .buttonStyle(.plain)
+                        }
+                        PrimaryButton(title: "选择学员并报名", systemImage: "person.badge.plus") {
+                            showStudentPicker = true
                         }
                     }
                 }
+                .padding(16)
+                .background(JWColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
                 .frame(width: 430)
             }
         }
@@ -848,14 +438,16 @@ private struct CourseFilters: View {
     @Binding var selectedSubject: String
 
     var body: some View {
-        AppCard {
-            VStack(alignment: .leading, spacing: 14) {
-                FilterRow(title: "年级", options: ["全部", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "初一", "高三"], selection: $selectedGrade)
-                FilterRow(title: "年度", options: ["全部", "2027", "2026", "2025", "2023"], selection: $selectedYear)
-                FilterRow(title: "类型", options: ["全部", "寒假课", "春季课", "暑假课", "秋季课", "考试"], selection: $selectedType)
-                FilterRow(title: "学科", options: ["全部", "信息学算法", "国文素养", "信息学实验P", "信息学实验C", "信息学语言传播"], selection: $selectedSubject)
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            FilterRow(title: "年级", options: ["全部", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "初一", "高三"], selection: $selectedGrade)
+            FilterRow(title: "年度", options: ["全部", "2027", "2026", "2025", "2023"], selection: $selectedYear)
+            FilterRow(title: "类型", options: ["全部", "寒假课", "春季课", "暑假课", "秋季课", "考试"], selection: $selectedType)
+            FilterRow(title: "学科", options: ["全部", "信息学算法", "国文素养", "信息学实验P", "信息学实验C", "信息学语言传播"], selection: $selectedSubject)
         }
+        .padding(16)
+        .background(JWColor.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
     }
 }
 
@@ -929,9 +521,9 @@ private struct CourseCard: View {
             .foregroundStyle(JWColor.text)
             .padding(18)
             .frame(minHeight: 210, alignment: .topLeading)
-            .background(.white)
+            .background(JWColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(selected ? JWColor.primary : JWColor.divider, lineWidth: selected ? 2 : 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(selected ? JWColor.primary : JWColor.divider, lineWidth: selected ? 1.5 : 1))
         }
         .buttonStyle(.plain)
     }
@@ -958,8 +550,8 @@ private struct ClassChoiceRow: View {
                 .foregroundStyle(JWColor.accent)
         }
         .padding(12)
-        .background(.white)
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(selected ? JWColor.primary : JWColor.divider, lineWidth: selected ? 2 : 1))
+        .background(JWColor.surfaceMuted.opacity(selected ? 0.55 : 0.28))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(selected ? JWColor.primary : JWColor.divider, lineWidth: selected ? 1.5 : 1))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
@@ -1046,24 +638,26 @@ private struct ScheduleView: View {
     @State private var consultCount = ""
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 14) {
             HStack(spacing: 14) {
                 MetricCard(title: "今日场次", value: "\(store.testSessions.count)", tint: JWColor.primary, systemImage: "number")
                 MetricCard(title: "已报", value: "\(store.selectedTestSession?.seats.count ?? 0)", tint: JWColor.accent, systemImage: "person.3")
                 MetricCard(title: "已到", value: "\(store.selectedTestSession?.seats.filter(\.studentCheckedIn).count ?? 0)", tint: JWColor.success, systemImage: "checkmark.circle")
             }
             if let session = store.selectedTestSession {
-                AppCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            SectionTitle(title: session.title)
-                            Spacer()
-                            SecondaryButton(title: "重新排座", systemImage: "arrow.up.arrow.down") { showReorder = true }
-                            SecondaryButton(title: "试卷批改", systemImage: "doc.text.magnifyingglass") { store.navigate(.assessment) }
-                        }
-                        ScheduleTable(session: session)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        SectionTitle(title: session.title)
+                        Spacer()
+                        SecondaryButton(title: "重新排座", systemImage: "arrow.up.arrow.down") { showReorder = true }
+                        SecondaryButton(title: "试卷批改", systemImage: "doc.text.magnifyingglass") { store.navigate(.assessment) }
                     }
+                    ScheduleTable(session: session)
                 }
+                .padding(16)
+                .background(JWColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
             }
         }
         .overlay {
@@ -1100,25 +694,77 @@ private struct ScheduleTable: View {
                 TableHeader("家长签到", width: 120)
                 TableHeader("操作", width: 180)
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .padding(.horizontal, 12)
-            .background(JWColor.surfaceMuted)
+            .background(Color.clear)
             ForEach(session.seats) { seat in
                 HStack {
                     Text("\(seat.seatNo)").frame(width: 80)
                     VStack(alignment: .leading) {
-                        Text(store.studentName(seat.studentID)).font(.system(size: 15, weight: .bold))
-                        Text(store.studentByID(seat.studentID)?.phone ?? "").font(.system(size: 12)).foregroundStyle(JWColor.textMuted)
+                        let student = store.studentByID(seat.studentID)
+                        HStack(spacing: 6) {
+                            if seat.studentLoggedIn {
+                                Image(systemName: "wifi")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(JWColor.success)
+                            }
+                            Text(student?.name ?? store.studentName(seat.studentID))
+                                .font(.system(size: 15, weight: .bold))
+                        }
+                        if let number = student?.number {
+                            Text(number)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(JWColor.text)
+                        }
+                        Text(student?.phone ?? "")
+                            .font(.system(size: 12))
+                            .foregroundStyle(JWColor.textMuted)
+                        HStack(spacing: 8) {
+                            InlineActionButton(title: "打电话", systemImage: "phone.fill") {
+                                let phone = store.studentByID(seat.studentID)?.phone ?? "--"
+                                store.toast = "拨号占位：\(phone)"
+                            }
+                            InlineActionButton(title: "扫码登录", systemImage: "qrcode.viewfinder") {
+                                store.toast = "扫码登录占位"
+                            }
+                        }
                     }
                     .frame(width: 180, alignment: .leading)
-                    Text(seat.subject).frame(maxWidth: .infinity, alignment: .leading)
-                    Text(seat.result.map(String.init) ?? "录入").foregroundStyle(JWColor.primary).frame(width: 80)
-                    Picker("", selection: Binding(get: { seat.answerMode }, set: { store.updateAnswerMode(sessionID: session.id, seatID: seat.id, mode: $0) })) {
-                        Text("纸笔").tag("纸笔")
-                        Text("PAD").tag("PAD")
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(seat.subjects) { subjectItem in
+                            HStack(spacing: 8) {
+                                Text(subjectItem.title)
+                                    .lineLimit(1)
+                                if subjectItem.isMakeup {
+                                    Text("补")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 6)
+                                        .frame(height: 20)
+                                        .background(JWColor.accent)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                }
+                            }
+                        }
                     }
-                    .pickerStyle(.menu)
-                    .frame(width: 120)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(seat.subjects) { _ in
+                            Text(seat.result.map(String.init) ?? "录入")
+                                .foregroundStyle(JWColor.primary)
+                        }
+                    }
+                    .frame(width: 80, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(seat.subjects) { _ in
+                            Picker("", selection: Binding(get: { seat.answerMode }, set: { store.updateAnswerMode(sessionID: session.id, seatID: seat.id, mode: $0) })) {
+                                Text("纸笔").tag("纸笔")
+                                Text("PAD").tag("PAD")
+                            }
+                            .pickerStyle(.menu)
+                        }
+                    }
+                    .frame(width: 120, alignment: .leading)
                     CheckButton(isOn: seat.studentCheckedIn) { store.toggleStudentCheckIn(sessionID: session.id, seatID: seat.id) }
                         .frame(width: 120)
                     CheckButton(isOn: seat.parentCheckedIn) { store.toggleParentCheckIn(sessionID: session.id, seatID: seat.id) }
@@ -1133,14 +779,33 @@ private struct ScheduleTable: View {
                     .frame(width: 180)
                 }
                 .font(.system(size: 14, weight: .medium))
-                .padding(.vertical, 12)
+                .padding(.vertical, 16)
                 .padding(.horizontal, 12)
-                .background(.white)
+                .background(JWColor.surface)
                 .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(JWColor.divider))
+    }
+}
+
+private struct InlineActionButton: View {
+    var title: String
+    var systemImage: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 10, weight: .medium))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(JWColor.primary)
+            .padding(.horizontal, 2)
+            .frame(height: 24)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -1153,7 +818,7 @@ private struct TableHeader: View {
     }
     var body: some View {
         Text(title)
-            .font(.system(size: 14, weight: .bold))
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(JWColor.textMuted)
             .frame(width: width, alignment: .leading)
             .frame(maxWidth: width == nil ? .infinity : nil, alignment: .leading)
@@ -1167,11 +832,10 @@ private struct CheckButton: View {
     var body: some View {
         Button(action: action) {
             Text(isOn ? "已签" : "签到")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(isOn ? .white : JWColor.primary)
                 .frame(width: 72, height: 36)
-                .background(isOn ? JWColor.primary : .white)
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(isOn ? Color.clear : JWColor.divider))
+                .background(isOn ? JWColor.primary : JWColor.primaryLight.opacity(0.55))
                 .clipShape(RoundedRectangle(cornerRadius: 9))
         }
         .buttonStyle(.plain)
@@ -1193,36 +857,37 @@ private struct AttendanceView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 14) {
                 MetricCard(title: "未打卡", value: "\(store.attendanceRecords.filter { $0.status == "未打卡" }.count)", tint: JWColor.danger, systemImage: "person.crop.circle.badge.exclamationmark")
                 MetricCard(title: "已回访", value: "\(store.attendanceRecords.filter(\.hasVisit).count)", tint: JWColor.success, systemImage: "phone.fill")
                 MetricCard(title: "待处理", value: "\(store.attendanceRecords.count)", tint: JWColor.primary, systemImage: "list.bullet.rectangle")
             }
 
-            AppCard(padding: 0) {
-                VStack(spacing: 0) {
-                    HStack(spacing: 12) {
-                        SearchField(placeholder: "搜索学员或班级", text: $search)
-                        SecondaryButton(title: "教室管理", systemImage: "building.2") { showRooms = true }
-                    }
-                    .padding(16)
-
-                    HStack {
-                        ForEach(["未打卡", "已回访", "全部"], id: \.self) { item in
-                            FilterChip(title: item, isSelected: tab == item) { tab = item }
-                        }
-                        Spacer()
-                        Text("按紧急程度排序")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(JWColor.textMuted)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 14)
-
-                    AttendanceTable(records: filteredRecords)
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    SearchField(placeholder: "搜索学员或班级", text: $search)
+                    SecondaryButton(title: "教室管理", systemImage: "building.2") { showRooms = true }
                 }
+                .padding(16)
+
+                HStack {
+                    ForEach(["未打卡", "已回访", "全部"], id: \.self) { item in
+                        FilterChip(title: item, isSelected: tab == item) { tab = item }
+                    }
+                    Spacer()
+                    Text("按紧急程度排序")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(JWColor.textMuted)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+
+                AttendanceTable(records: filteredRecords)
             }
+            .background(JWColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
         }
         .overlay {
             if showRooms {
@@ -1248,7 +913,7 @@ private struct AttendanceTable: View {
             }
             .padding(.horizontal, 16)
             .frame(height: 44)
-            .background(JWColor.surfaceMuted)
+            .background(Color.clear)
 
             if records.isEmpty {
                 EmptyStateView(title: "没有符合条件的考勤记录", systemImage: "checkmark.seal")
@@ -1316,29 +981,30 @@ private struct ClassroomModal: View {
                 }
 
                 ForEach(store.currentCampus?.rooms ?? []) { room in
-                    AppCard(padding: 14) {
-                        HStack(spacing: 14) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(room.name)
-                                    .font(.system(size: 18, weight: .bold))
-                                Text(room.webOn || room.screenOn || room.lightOn ? "设备运行中" : "空闲")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(JWColor.textMuted)
+                    HStack(spacing: 14) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(room.name)
+                                .font(.system(size: 18, weight: .bold))
+                            Text(room.webOn || room.screenOn || room.lightOn ? "设备运行中" : "空闲")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(JWColor.textMuted)
+                        }
+                        Spacer()
+                        if let campusID = store.currentCampus?.id {
+                            RoomToggle(label: "网页", systemImage: "safari", isOn: room.webOn) {
+                                store.toggleRoom(campusID: campusID, roomID: room.id, keyPath: \.webOn)
                             }
-                            Spacer()
-                            if let campusID = store.currentCampus?.id {
-                                RoomToggle(label: "网页", systemImage: "safari", isOn: room.webOn) {
-                                    store.toggleRoom(campusID: campusID, roomID: room.id, keyPath: \.webOn)
-                                }
-                                RoomToggle(label: "屏幕", systemImage: "display", isOn: room.screenOn) {
-                                    store.toggleRoom(campusID: campusID, roomID: room.id, keyPath: \.screenOn)
-                                }
-                                RoomToggle(label: "灯光", systemImage: "lightbulb", isOn: room.lightOn) {
-                                    store.toggleRoom(campusID: campusID, roomID: room.id, keyPath: \.lightOn)
-                                }
+                            RoomToggle(label: "屏幕", systemImage: "display", isOn: room.screenOn) {
+                                store.toggleRoom(campusID: campusID, roomID: room.id, keyPath: \.screenOn)
+                            }
+                            RoomToggle(label: "灯光", systemImage: "lightbulb", isOn: room.lightOn) {
+                                store.toggleRoom(campusID: campusID, roomID: room.id, keyPath: \.lightOn)
                             }
                         }
                     }
+                    .padding(14)
+                    .background(JWColor.surfaceMuted.opacity(0.45))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
             }
         }
@@ -1382,7 +1048,7 @@ private struct AssessmentView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            AppCard(padding: 0) {
+            VStack(spacing: 0) {
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 12) {
                         SectionTitle(title: "批改队列", actionTitle: nil)
@@ -1406,9 +1072,12 @@ private struct AssessmentView: View {
                     }
                 }
             }
+            .background(JWColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
             .frame(width: 360)
 
-            AppCard(padding: 0) {
+            VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
                     if let studentID = activeStudentID {
                         HStack(alignment: .center, spacing: 18) {
@@ -1455,6 +1124,9 @@ private struct AssessmentView: View {
                     }
                 }
             }
+            .background(JWColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
         }
     }
 }
@@ -1496,7 +1168,7 @@ private struct ReviewQueueRow: View {
                 }
             }
             .padding(12)
-            .background(selected ? JWColor.rail : JWColor.surface)
+            .background(selected ? JWColor.primary : JWColor.surfaceMuted.opacity(0.35))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(selected ? Color.clear : JWColor.divider))
         }
@@ -1616,29 +1288,32 @@ private struct OrdersView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            AppCard(padding: 0) {
-                VStack(spacing: 0) {
-                    VStack(spacing: 12) {
-                        SearchField(placeholder: "搜索班级或学员", text: $search)
-                        HStack {
-                            ForEach(OrderStatus.allCases) { status in
-                                FilterChip(title: status.rawValue, isSelected: tab == status) { tab = status }
-                            }
-                            Spacer()
+            VStack(spacing: 0) {
+                VStack(spacing: 12) {
+                    SearchField(placeholder: "搜索班级或学员", text: $search)
+                    HStack {
+                        ForEach(OrderStatus.allCases) { status in
+                            FilterChip(title: status.rawValue, isSelected: tab == status) { tab = status }
                         }
-                    }
-                    .padding(16)
-                    .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
-
-                    OrderTable(rows: rows) { order in
-                        store.selectedOrderID = order.id
-                        showRefund = true
+                        Spacer()
                     }
                 }
+                .padding(16)
+                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+
+                OrderTable(rows: rows) { order in
+                    store.selectedOrderID = order.id
+                    showRefund = true
+                }
             }
+            .background(JWColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+            .frame(maxWidth: .infinity)
+            .layoutPriority(1)
 
             RefundSummaryPanel()
-                .frame(width: 300)
+                .frame(width: 260)
         }
         .overlay {
             if showRefund, let order = store.selectedOrder {
@@ -1653,28 +1328,31 @@ private struct OrderTable: View {
     var refund: (Order) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                DataTableHeader("订单", width: 320)
-                DataTableHeader("学员", width: 130)
-                DataTableHeader("金额", width: 100)
-                DataTableHeader("收款", width: 160)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .frame(height: 44)
-            .background(JWColor.surfaceMuted)
+        ScrollView(.horizontal, showsIndicators: false) {
+            VStack(spacing: 0) {
+                HStack {
+                    DataTableHeader("订单", width: 280)
+                    DataTableHeader("学员", width: 110)
+                    DataTableHeader("金额", width: 90)
+                    DataTableHeader("收款", width: 150)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 44)
+                .background(JWColor.surfaceMuted)
 
-            if rows.isEmpty {
-                EmptyStateView(title: "当前暂无订单", systemImage: "creditcard")
-                    .frame(minHeight: 440)
-            } else {
-                ForEach(rows) { order in
-                    OrderRow(order: order) { refund(order) }
+                if rows.isEmpty {
+                    EmptyStateView(title: "当前暂无订单", systemImage: "creditcard")
+                        .frame(minHeight: 440)
+                } else {
+                    ForEach(rows) { order in
+                        OrderRow(order: order) { refund(order) }
+                    }
                 }
             }
+            .frame(minWidth: 760, minHeight: 500, alignment: .topLeading)
         }
-        .frame(minHeight: 500, alignment: .top)
+        .frame(minHeight: 500, alignment: .topLeading)
     }
 }
 
@@ -1696,15 +1374,15 @@ private struct OrderRow: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(JWColor.textMuted)
             }
-            .frame(width: 320, alignment: .leading)
+            .frame(width: 280, alignment: .leading)
             Text(store.studentName(order.studentID))
                 .font(.system(size: 15, weight: .semibold))
-                .frame(width: 130, alignment: .leading)
+                .frame(width: 110, alignment: .leading)
             Text("¥ \(order.amount)")
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(order.amount == 0 ? JWColor.danger : JWColor.text)
                 .monospacedDigit()
-                .frame(width: 100, alignment: .leading)
+                .frame(width: 90, alignment: .leading)
             VStack(alignment: .leading, spacing: 4) {
                 Text(order.receiver)
                     .font(.system(size: 14, weight: .bold))
@@ -1712,7 +1390,7 @@ private struct OrderRow: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(JWColor.textMuted)
             }
-            .frame(width: 160, alignment: .leading)
+            .frame(width: 150, alignment: .leading)
             Spacer()
             if order.status == .paid {
                 SecondaryButton(title: "退款", systemImage: "arrow.uturn.backward", tint: JWColor.danger, action: refund)
@@ -1753,9 +1431,8 @@ private struct RefundSummaryPanel: View {
                                 .foregroundStyle(JWColor.textMuted)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(10)
-                        .background(JWColor.surfaceMuted)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .padding(.vertical, 8)
+                        .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
                     }
                 }
             }
@@ -1792,13 +1469,14 @@ private struct RefundModal: View {
     var body: some View {
         SideSheetShell(title: "发起退款", subtitle: "\(store.studentName(order.studentID)) · ¥ \(order.amount)", close: close) {
             VStack(alignment: .leading, spacing: 18) {
-                AppCard(padding: 14) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        InfoLine(label: "课程", value: order.courseTitle)
-                        InfoLine(label: "班级", value: order.classTitle)
-                        InfoLine(label: "原单", value: "¥ \(order.amount)")
-                    }
+                VStack(alignment: .leading, spacing: 10) {
+                    InfoLine(label: "课程", value: order.courseTitle)
+                    InfoLine(label: "班级", value: order.classTitle)
+                    InfoLine(label: "原单", value: "¥ \(order.amount)")
                 }
+                .padding(14)
+                .background(JWColor.surfaceMuted.opacity(0.45))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 FormBlock(title: "退款信息") {
                     Picker("退款原因", selection: $reason) {

@@ -14,12 +14,12 @@ enum AppRoute: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .workspace: "square.grid.2x2"
+        case .workspace: "house"
         case .students: "person.2"
-        case .courseSelection: "calendar.badge.plus"
-        case .schedule: "book"
-        case .attendance: "checkmark.rectangle"
-        case .assessment: "doc.text.magnifyingglass"
+        case .courseSelection: "graduationcap"
+        case .schedule: "calendar"
+        case .attendance: "checkmark.circle"
+        case .assessment: "doc.text.viewfinder"
         case .orders: "creditcard"
         }
     }
@@ -292,22 +292,38 @@ struct TestSession: Identifiable, Hashable {
     }
 }
 
+struct TestSeatSubject: Identifiable, Hashable {
+    let id: UUID
+    var title: String
+    var isMakeup: Bool
+
+    init(id: UUID = UUID(), title: String, isMakeup: Bool = false) {
+        self.id = id
+        self.title = title
+        self.isMakeup = isMakeup
+    }
+}
+
 struct TestSeat: Identifiable, Hashable {
     let id: UUID
     var seatNo: Int
     var studentID: UUID
     var subject: String
+    var subjects: [TestSeatSubject]
+    var studentLoggedIn: Bool
     var result: Int?
     var answerMode: String
     var studentCheckedIn: Bool
     var parentCheckedIn: Bool
     var note: String
 
-    init(id: UUID = UUID(), seatNo: Int, studentID: UUID, subject: String, result: Int? = nil, answerMode: String = "纸笔", studentCheckedIn: Bool = false, parentCheckedIn: Bool = false, note: String = "") {
+    init(id: UUID = UUID(), seatNo: Int, studentID: UUID, subject: String, subjects: [TestSeatSubject]? = nil, studentLoggedIn: Bool = false, result: Int? = nil, answerMode: String = "纸笔", studentCheckedIn: Bool = false, parentCheckedIn: Bool = false, note: String = "") {
         self.id = id
         self.seatNo = seatNo
         self.studentID = studentID
         self.subject = subject
+        self.subjects = subjects ?? [TestSeatSubject(title: subject)]
+        self.studentLoggedIn = studentLoggedIn
         self.result = result
         self.answerMode = answerMode
         self.studentCheckedIn = studentCheckedIn

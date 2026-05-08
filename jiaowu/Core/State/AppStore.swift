@@ -36,6 +36,8 @@ final class AppStore {
     var selectedOrderID: UUID?
     var toast: String?
     var feedback: UIFeedback?
+    var shouldPresentCampusDialog = false
+    var pendingCampusSelectionID: UUID?
     var navigationState = NavigationState()
     var workspaceState = WorkspaceState()
     var enrollmentState = EnrollmentState()
@@ -80,12 +82,49 @@ final class AppStore {
         orders.filter { $0.status == .paid }
     }
 
+    private static let lastWorkCampusIDKey = "jw_last_work_campus_id"
+
+    /// 上次在本设备确认过的「工作校区」，用于登录后默认选中。
+    func lastPersistedWorkCampusID() -> UUID? {
+        guard let s = UserDefaults.standard.string(forKey: Self.lastWorkCampusIDKey),
+              let id = UUID(uuidString: s) else { return nil }
+        return campuses.first(where: { $0.id == id })?.id
+    }
+
     func login(campus: Campus) {
         currentCampus = campus
-        currentStaff = StaffUser(name: "纵强强", campusName: campus.name)
+        UserDefaults.standard.set(campus.id.uuidString, forKey: Self.lastWorkCampusIDKey)
+        currentStaff = StaffUser(name: "许艳博", campusName: campus.name)
         isLoggedIn = true
         route = .workspace
         navigationState.selectedRoute = .workspace
+        shouldPresentCampusDialog = false
+        pendingCampusSelectionID = campus.id
+    }
+
+    /// 扫码成功后直接进入首页，并沿用设备上次校区（若有）。
+    func completeLoginAfterScan() {
+        if let lastID = lastPersistedWorkCampusID(),
+           let lastCampus = campuses.first(where: { $0.id == lastID }) {
+            currentCampus = lastCampus
+        } else if currentCampus == nil {
+            currentCampus = campuses.first
+        }
+        isLoggedIn = true
+        route = .workspace
+        navigationState.selectedRoute = .workspace
+        currentStaff = StaffUser(name: "许艳博", campusName: currentCampus?.name ?? "Campus")
+        pendingCampusSelectionID = currentCampus?.id
+        shouldPresentCampusDialog = false
+    }
+
+    func confirmPendingCampusSelection() {
+        guard let id = pendingCampusSelectionID,
+              let campus = campuses.first(where: { $0.id == id }) else { return }
+        currentCampus = campus
+        UserDefaults.standard.set(campus.id.uuidString, forKey: Self.lastWorkCampusIDKey)
+        currentStaff = StaffUser(name: "许艳博", campusName: campus.name)
+        shouldPresentCampusDialog = false
     }
 
     func navigate(_ route: AppRoute) {
@@ -106,7 +145,7 @@ final class AppStore {
               let course = selectedCourse,
               let klass = selectedClass else { return }
         enrollments.append(Enrollment(studentID: studentID, courseID: course.id, classID: klass.id, createdAt: "2026-05-07"))
-        orders.append(Order(studentID: studentID, courseTitle: course.title, classTitle: klass.title, amount: course.price, status: course.price == 0 ? .paid : .pending, paidAt: "2026-05-07 20:02:39", receiver: currentStaff?.name ?? "纵强强"))
+        orders.append(Order(studentID: studentID, courseTitle: course.title, classTitle: klass.title, amount: course.price, status: course.price == 0 ? .paid : .pending, paidAt: "2026-05-07 20:02:39", receiver: currentStaff?.name ?? "许艳博"))
         if let courseIndex = courses.firstIndex(where: { $0.id == course.id }),
            let classIndex = courses[courseIndex].classes.firstIndex(where: { $0.id == klass.id }) {
             courses[courseIndex].classes[classIndex].enrolled += 1
@@ -235,10 +274,46 @@ final class AppStore {
     }
 
     private func loadMockData() {
-        campuses = [
-            Campus(name: "XiangShuW", rooms: ["现场安排", "A01", "A02", "B01", "B02", "B03"].map { Classroom(name: $0) }),
-            Campus(name: "AnNongD", rooms: ["校区教室", "待定2", "待定3", "A01", "A02", "B04", "B05"].map { Classroom(name: $0) })
+        // 固定校区 ID，便于 UserDefaults 记住上次选择。
+        let campusSeeds: [(String, String)] = [
+            ("Bada", "八达"),
+            ("Bafang", "八方"),
+            ("BazhongHexi", "八中河西"),
+            ("Chongwen", "崇文"),
+            ("Dongtang", "东塘"),
+            ("Furong", "芙蓉"),
+            ("Guansha", "观沙"),
+            ("Hexi", "河西"),
+            ("Heping", "和平"),
+            ("Jiufeng", "九峰"),
+            ("Jinpenling", "金盆岭"),
+            ("Jinqiao", "金桥"),
+            ("Kele", "可乐"),
+            ("Mawangdui", "马王堆"),
+            ("Muli", "木里"),
+            ("RengongZhinen", "人工智能"),
+            ("Shazitang", "砂子塘"),
+            ("Shenxianling", "神仙岭"),
+            ("Sifangping", "四方坪"),
+            ("Tianxin", "天心"),
+            ("Tianlu", "天麓"),
+            ("Wangyuehu", "望月湖"),
+            ("Wenyi", "文艺"),
+            ("Xiangshu", "湘树"),
+            ("Yanghu", "洋湖"),
+            ("Yuhua", "雨花"),
+            ("Yuelu", "岳麓"),
+            ("Zhongnan", "中南"),
         ]
+        let orderedSeeds = campusSeeds.sorted { $0.0.localizedCaseInsensitiveCompare($1.0) == .orderedAscending }
+        campuses = orderedSeeds.enumerated().map { index, seed in
+            let id = UUID(uuidString: String(format: "550E8400-E29B-41D4-A716-44665544%04d", index + 1)) ?? UUID()
+            return Campus(
+                id: id,
+                name: seed.0,
+                rooms: [seed.1, "A01", "A02", "B01", "B02"].map { Classroom(name: $0) }
+            )
+        }
         currentCampus = campuses.first
         let s1 = Student(name: "许魏洲", gender: .female, number: "51061903", grade: "二年级", phone: "130****0619", school: "XiangShuW", creditScore: 10, testLevels: [TestLevel(grade: "二年级", subject: "信息学算法", score: 68, level: "A", source: "诊断测试")])
         let s2 = Student(name: "李泽宇 Q", gender: .male, number: "60530001", grade: "一年级", phone: "180****3001", school: "XiangShuW", creditScore: 9)
@@ -259,8 +334,8 @@ final class AppStore {
 
         enrollments = [Enrollment(studentID: s1.id, courseID: courses[2].id, classID: classB.id, createdAt: "2026-05-07")]
         orders = [
-            Order(studentID: s1.id, courseTitle: courses[2].title, classTitle: classB.title, amount: 0, status: .paid, paidAt: "2026-05-07 20:02:39", receiver: "纵强强"),
-            Order(studentID: s2.id, courseTitle: courses[0].title, classTitle: classA.title, amount: 3150, status: .pending, paidAt: "--", receiver: "纵强强")
+            Order(studentID: s1.id, courseTitle: courses[2].title, classTitle: classB.title, amount: 0, status: .paid, paidAt: "2026-05-07 20:02:39", receiver: "许艳博"),
+            Order(studentID: s2.id, courseTitle: courses[0].title, classTitle: classA.title, amount: 3150, status: .pending, paidAt: "--", receiver: "许艳博")
         ]
         attendanceRecords = [
             AttendanceRecord(studentID: s1.id, classTitle: classB.title, time: "05-07 23:00-23:30", status: "未打卡"),
@@ -268,9 +343,9 @@ final class AppStore {
         ]
 
         let session = TestSession(title: "自动化测试班-XiangShuW-20260507", campus: "XiangShuW", room: "XiangShuW#现场安排", subject: "信息学算法", grade: "高三", time: "05月07日 23:00~23:30", status: "未开始", seats: [
-            TestSeat(seatNo: 13, studentID: s1.id, subject: "信息学算法", studentCheckedIn: true, parentCheckedIn: false),
-            TestSeat(seatNo: 14, studentID: s3.id, subject: "信息学算法", studentCheckedIn: false, parentCheckedIn: false),
-            TestSeat(seatNo: 15, studentID: s4.id, subject: "信息学语言传播", studentCheckedIn: false, parentCheckedIn: false)
+            TestSeat(seatNo: 13, studentID: s1.id, subject: "信息学算法", subjects: [TestSeatSubject(title: "二年级·信息学算法"), TestSeatSubject(title: "三年级·信息学算法", isMakeup: true)], studentLoggedIn: true, studentCheckedIn: true, parentCheckedIn: false),
+            TestSeat(seatNo: 14, studentID: s3.id, subject: "信息学算法", subjects: [TestSeatSubject(title: "三年级·信息学算法", isMakeup: true)], studentLoggedIn: false, studentCheckedIn: false, parentCheckedIn: false),
+            TestSeat(seatNo: 15, studentID: s4.id, subject: "信息学语言传播", subjects: [TestSeatSubject(title: "二年级·信息学语言传播")], studentLoggedIn: true, studentCheckedIn: false, parentCheckedIn: false)
         ])
         testSessions = [session]
         selectedTestSessionID = session.id
