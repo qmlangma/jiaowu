@@ -14,13 +14,13 @@ enum AppRoute: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
-        case .workspace: "house"
-        case .students: "person.2"
-        case .courseSelection: "graduationcap"
-        case .schedule: "calendar"
-        case .attendance: "checkmark.circle"
-        case .assessment: "doc.text.viewfinder"
-        case .orders: "creditcard"
+        case .workspace: "house.fill"
+        case .students: "person.2.fill"
+        case .courseSelection: "graduationcap.fill"
+        case .schedule: "calendar.badge.clock"
+        case .attendance: "checkmark.seal.fill"
+        case .assessment: "doc.text.fill"
+        case .orders: "creditcard.fill"
         }
     }
 }
@@ -428,5 +428,11 @@ struct TestAnswer: Identifiable, Hashable {
         self.studentAnswer = studentAnswer
         self.state = state
         self.issue = issue
+    }
+
+    /// 上传/提交失败类异常：不展示学员作答文本。
+    var shouldHideStudentAnswer: Bool {
+        guard let issue else { return false }
+        return issue.contains("答题提交失败")
     }
 }

@@ -2,72 +2,38 @@ import SwiftUI
 
 struct StudentsView: View {
     @Environment(AppStore.self) private var store
-    @State private var search = ""
-    @State private var tab = "在读课程"
+    @State private var listSearch = ""
+    @State private var detailTab = "在读课程"
+    @State private var showDetailPage = false
     @State private var showAddStudent = false
     @State private var showAddLevel = false
     @State private var showCredit = false
 
     var filteredStudents: [Student] {
-        if search.isEmpty { return store.students }
-        return store.students.filter { $0.name.localizedStandardContains(search) || $0.number.contains(search) || $0.phone.contains(search) }
+        if listSearch.isEmpty { return store.students }
+        return store.students.filter { $0.name.localizedStandardContains(listSearch) || $0.number.contains(listSearch) || $0.phone.contains(listSearch) }
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 14) {
-                HStack {
-                    Text("学员目录")
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Button {
-                        showAddStudent = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(JWColor.primary)
-                }
-                SearchField(placeholder: "搜索学员、编号、手机号", text: $search)
-                ScrollView {
-                    VStack(spacing: 6) {
-                        ForEach(filteredStudents) { student in
-                            StudentListRow(student: student, selected: store.selectedStudentID == student.id) {
-                                store.selectedStudentID = student.id
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(14)
-            .background(JWColor.surface)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .frame(width: 340)
-
-            if let student = store.selectedStudent {
-                VStack(spacing: 14) {
-                    VStack(spacing: 12) {
-                        StudentProfileHeader(student: student, showCredit: { showCredit = true }, showAddLevel: { showAddLevel = true })
-                        HStack {
-                            ForEach(["在读课程", "订单", "测试级别", "信用分", "记录"], id: \.self) { item in
-                                FilterChip(title: item, isSelected: tab == item) { tab = item }
-                            }
-                            Spacer()
-                        }
-                        .padding(.bottom, 4)
-                        StudentDetailTab(tab: tab, student: student)
-                    }
-                    .padding(16)
-                    .background(JWColor.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
-                }
-                .frame(maxWidth: .infinity, alignment: .top)
+        Group {
+            if showDetailPage, let student = store.selectedStudent {
+                StudentDetailPage(
+                    student: student,
+                    tab: $detailTab,
+                    back: { showDetailPage = false },
+                    showCredit: { showCredit = true },
+                    showAddLevel: { showAddLevel = true }
+                )
             } else {
-                EmptyStateView()
+                StudentListPage(
+                    search: $listSearch,
+                    students: filteredStudents,
+                    addStudent: { showAddStudent = true },
+                    openDetail: { student in
+                        store.selectedStudentID = student.id
+                        showDetailPage = true
+                    }
+                )
             }
         }
         .overlay {
@@ -81,6 +47,147 @@ struct StudentsView: View {
                 CreditModal(student: student, close: { showCredit = false })
             }
         }
+    }
+}
+
+private struct StudentListPage: View {
+    @Binding var search: String
+    var students: [Student]
+    var addStudent: () -> Void
+    var openDetail: (Student) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("学员列表")
+                    .font(.system(size: 38, weight: .bold))
+                Spacer()
+                PrimaryButton(title: "增加学员", systemImage: "plus", action: addStudent)
+                    .frame(width: 138)
+            }
+
+            HStack(spacing: 10) {
+                SearchField(placeholder: "搜索姓名 / 电话 / 编号", text: $search)
+                Menu("年级  全部") {}
+                    .menuStyle(.button)
+                Menu("校区  全部") {}
+                    .menuStyle(.button)
+                Menu("状态  全部") {}
+                    .menuStyle(.button)
+            }
+            .font(.system(size: 14, weight: .semibold))
+
+            VStack(spacing: 0) {
+                StudentTableHeaderRow()
+                ForEach(students) { student in
+                    StudentTableDataRow(student: student) {
+                        openDetail(student)
+                    }
+                }
+            }
+            .background(JWColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+        }
+    }
+}
+
+private struct StudentDetailPage: View {
+    var student: Student
+    @Binding var tab: String
+    var back: () -> Void
+    var showCredit: () -> Void
+    var showAddLevel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Button(action: back) {
+                Label("返回学员列表", systemImage: "chevron.left")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(JWColor.primary)
+            }
+            .buttonStyle(.plain)
+
+            VStack(spacing: 12) {
+                StudentProfileHeader(student: student, showCredit: showCredit, showAddLevel: showAddLevel)
+                HStack {
+                    ForEach(["在读课程", "跟课记录", "订单记录", "测试级别", "信用分明细"], id: \.self) { item in
+                        FilterChip(title: item, isSelected: tab == item) { tab = item }
+                    }
+                    Spacer()
+                }
+                .padding(.bottom, 4)
+                StudentDetailTab(tab: mappedTab(tab), student: student)
+            }
+            .padding(16)
+            .background(JWColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+        }
+    }
+
+    private func mappedTab(_ tab: String) -> String {
+        switch tab {
+        case "跟课记录": return "记录"
+        case "订单记录": return "订单"
+        case "信用分明细": return "信用分"
+        default: return tab
+        }
+    }
+}
+
+private struct StudentTableHeaderRow: View {
+    var body: some View {
+        HStack {
+            Text("头像").frame(width: 70, alignment: .leading)
+            Text("姓名").frame(width: 90, alignment: .leading)
+            Text("性别").frame(width: 60, alignment: .leading)
+            Text("年级").frame(width: 80, alignment: .leading)
+            Text("学校").frame(width: 170, alignment: .leading)
+            Text("电话").frame(width: 150, alignment: .leading)
+            Text("信用分").frame(width: 80, alignment: .leading)
+            Text("状态").frame(width: 70, alignment: .leading)
+            Text("操作").frame(width: 70, alignment: .leading)
+            Spacer()
+        }
+        .font(.system(size: 13, weight: .bold))
+        .foregroundStyle(JWColor.textMuted)
+        .padding(.horizontal, 14)
+        .frame(height: 42)
+        .background(JWColor.surfaceMuted.opacity(0.68))
+    }
+}
+
+private struct StudentTableDataRow: View {
+    var student: Student
+    var open: () -> Void
+
+    var body: some View {
+        HStack {
+            Image("DefaultAvatar")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 34, height: 34)
+                .clipShape(Circle())
+                .frame(width: 70, alignment: .leading)
+            Text(student.name).frame(width: 90, alignment: .leading)
+            Text(student.gender.rawValue).frame(width: 60, alignment: .leading)
+            Text(student.grade).frame(width: 80, alignment: .leading)
+            Text(student.school).frame(width: 170, alignment: .leading).lineLimit(1)
+            Text(student.phone).frame(width: 150, alignment: .leading)
+            Text("\(student.creditScore)").frame(width: 80, alignment: .leading)
+            StatusBadge(title: "在读", tint: JWColor.success)
+                .frame(width: 70, alignment: .leading)
+            Button("查看", action: open)
+                .font(.system(size: 14, weight: .bold))
+                .frame(width: 70, alignment: .leading)
+            Spacer()
+        }
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(JWColor.text)
+        .padding(.horizontal, 14)
+        .frame(height: 56)
+        .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
     }
 }
 

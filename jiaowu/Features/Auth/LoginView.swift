@@ -45,21 +45,22 @@ struct LoginView: View {
         ZStack {
             LoginBackdrop()
             if horizontalSizeClass == .regular {
-                HStack(spacing: 16) {
+                HStack(spacing: 0) {
                     LoginBrandPanel()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     LoginActionPanel(onScanSucceeded: onDingTalkScanSucceeded)
-                        .frame(width: 420)
+                        .frame(width: 450)
                 }
-                .padding(26)
+                .padding(.horizontal, 42)
+                .padding(.vertical, 26)
             } else {
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     LoginBrandPanel()
                         .frame(maxHeight: 280)
                     LoginActionPanel(onScanSucceeded: onDingTalkScanSucceeded)
                         .frame(maxWidth: .infinity)
                 }
-                .padding(18)
+                .padding(16)
             }
         }
         .ignoresSafeArea()
@@ -98,24 +99,27 @@ private struct LoginBrandPanel: View {
             Circle()
                 .fill(Color.white.opacity(0.10))
                 .frame(width: 560, height: 560)
-                .offset(x: -220, y: 140)
+                .offset(x: -210, y: 100)
 
-            HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 14) {
                 Image("LoginLogo")
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 78, height: 78)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .frame(width: 84, height: 84)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.white.opacity(0.38), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(Color.white.opacity(0.42), lineWidth: 1)
                     )
-                Text("时光空间")
-                    .font(.system(size: 56, weight: .bold))
+                Text("教务工作台")
+                    .font(.system(size: 54, weight: .bold))
                     .foregroundStyle(.white)
+                Text("课表、学员、测评、订单一体化管理")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.72))
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .padding(.horizontal, 52)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.leading, 42)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -126,32 +130,60 @@ private struct LoginActionPanel: View {
     private let qrPayload = "https://login.dingtalk.com/oauth2/challenge?state=jiaowu-placeholder"
 
     var body: some View {
-        VStack(spacing: 22) {
-            Spacer()
-            VStack(spacing: 10) {
-                Text("钉钉扫码登录")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(JWColor.text)
-                Text("请使用钉钉扫描二维码登录")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(JWColor.textMuted)
-            }
+        ZStack(alignment: .bottom) {
+            VStack(spacing: 34) {
+                VStack(spacing: 6) {
+                    Text("钉钉扫码登录")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundStyle(JWColor.text)
+                    Text("请使用钉钉扫描二维码登录")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(JWColor.textMuted)
+                }
 
-            ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(JWColor.primary.opacity(0.4), style: StrokeStyle(lineWidth: 2, dash: [8, 8]))
-                    .frame(width: 312, height: 312)
-                JWQRCodeView(payload: qrPayload, dimension: 274)
-                    .padding(12)
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(JWColor.divider))
-                    .onTapGesture { onScanSucceeded() }
+                ZStack {
+                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                        .stroke(JWColor.primary.opacity(0.4), style: StrokeStyle(lineWidth: 2, dash: [8, 8]))
+                        .frame(width: 312, height: 312)
+                    JWQRCodeView(payload: qrPayload, dimension: 274)
+                        .padding(12)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(JWColor.divider))
+                        .onTapGesture { onScanSucceeded() }
+
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.clear, JWColor.primary.opacity(0.58), Color.clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: 320, height: 4)
+                        .blur(radius: 1)
+                }
             }
-            Spacer()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.shield")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(JWColor.textMuted.opacity(0.7))
+                Text("登录即表示同意")
+                    .foregroundStyle(JWColor.textMuted.opacity(0.75))
+                Text("《用户协议》")
+                    .foregroundStyle(JWColor.primary.opacity(0.85))
+                Text("和")
+                    .foregroundStyle(JWColor.textMuted.opacity(0.75))
+                Text("《隐私政策》")
+                    .foregroundStyle(JWColor.primary.opacity(0.85))
+            }
+            .font(.system(size: 14, weight: .medium))
+            .padding(.bottom, 28)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 34)
+        .padding(.horizontal, 24)
         .background(Color.white.opacity(0.94))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.72), lineWidth: 1))

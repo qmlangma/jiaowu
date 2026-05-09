@@ -26,9 +26,9 @@ enum JWSemanticColor {
     static let brandPrimaryPressed = JWPrimitive.blue800
     static let brandPrimaryLight = JWPrimitive.blue100
 
-    static let backgroundPage = Color(red: 0.94, green: 0.95, blue: 0.98)
-    static let backgroundSurface = JWPrimitive.gray000.opacity(0.72)
-    static let backgroundSurfaceMuted = Color(red: 0.94, green: 0.96, blue: 0.99)
+    static let backgroundPage = Color(red: 0.95, green: 0.96, blue: 0.99)
+    static let backgroundSurface = JWPrimitive.gray000
+    static let backgroundSurfaceMuted = JWPrimitive.blue100
 
     static let textPrimary = JWPrimitive.gray950
     static let textSecondary = JWPrimitive.gray700
@@ -62,14 +62,12 @@ struct AppCard<Content: View>: View {
     var body: some View {
         content
             .padding(padding)
-            .background(.ultraThinMaterial)
+            .background(JWColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.60), lineWidth: 1)
+                    .stroke(JWColor.divider, lineWidth: 1)
             )
-            .shadow(color: Color.white.opacity(0.25), radius: 1, x: 0, y: 0)
-            .shadow(color: Color.black.opacity(0.05), radius: 16, x: 0, y: 8)
     }
 }
 
@@ -88,7 +86,7 @@ struct PrimaryButton: View {
                 }
                 Text(title)
             }
-                .font(.system(size: 16, weight: .bold))
+                .font(.headline.weight(.semibold))
                 .foregroundStyle(.white)
                 .frame(minHeight: 44)
                 .frame(maxWidth: .infinity)
@@ -114,14 +112,14 @@ struct SecondaryButton: View {
                 }
                 Text(title)
             }
-                .font(.system(size: 15, weight: .bold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(tint)
                 .frame(minHeight: 42)
                 .padding(.horizontal, 18)
                 .background(tint.opacity(0.11))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color.white.opacity(0.45), lineWidth: 1)
+                        .stroke(JWColor.divider, lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
@@ -137,7 +135,7 @@ struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 14, weight: .bold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(isSelected ? JWColor.primary : JWColor.textMuted)
                 .frame(minHeight: 36)
                 .padding(.horizontal, 18)
@@ -158,7 +156,7 @@ struct StatusBadge: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 12, weight: .bold))
+            .font(.caption.weight(.bold))
             .foregroundStyle(tint)
             .padding(.horizontal, 10)
             .frame(minHeight: 28)
@@ -173,18 +171,19 @@ struct SectionTitle: View {
     var action: (() -> Void)?
 
     var body: some View {
-        HStack {
+        HStack(alignment: .center) {
             Text(title)
-                .font(.system(size: 34, weight: .bold))
+                .font(.title2.weight(.bold))
                 .foregroundStyle(JWColor.text)
-            Spacer()
+            Spacer(minLength: 0)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(JWColor.primary)
                     .buttonStyle(.plain)
             }
         }
+        .frame(minHeight: 36, alignment: .leading)
     }
 }
 
@@ -222,10 +221,10 @@ struct MetricCard: View {
                     .clipShape(Circle())
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(JWColor.textMuted)
                     Text(value)
-                        .font(.system(size: 30, weight: .bold))
+                        .font(.title2.weight(.bold))
                         .foregroundStyle(JWColor.text)
                 }
                 Spacer()
@@ -248,11 +247,11 @@ struct SearchField: View {
         }
         .padding(.horizontal, 16)
         .frame(minHeight: 44)
-        .background(.ultraThinMaterial)
+        .background(JWColor.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.white.opacity(0.55), lineWidth: 1)
+                .stroke(JWColor.divider, lineWidth: 1)
         )
     }
 }
@@ -264,7 +263,7 @@ struct ModalShell<Content: View>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.24)
+            Color.black.opacity(0.36)
                 .ignoresSafeArea()
                 .onTapGesture(perform: close)
             VStack(spacing: 18) {
@@ -286,11 +285,11 @@ struct ModalShell<Content: View>: View {
             }
             .padding(24)
             .frame(maxWidth: 620)
-            .background(.ultraThinMaterial)
+            .background(JWColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.white.opacity(0.55), lineWidth: 1)
+                    .stroke(JWColor.divider, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.10), radius: 36, x: 0, y: 18)
             .padding(24)
@@ -306,7 +305,7 @@ struct SideSheetShell<Content: View>: View {
 
     var body: some View {
         ZStack(alignment: .trailing) {
-            Color.black.opacity(0.20)
+            Color.black.opacity(0.28)
                 .ignoresSafeArea()
                 .onTapGesture(perform: close)
             VStack(spacing: 0) {
@@ -344,11 +343,11 @@ struct SideSheetShell<Content: View>: View {
             }
             .frame(width: 520)
             .frame(maxHeight: .infinity)
-            .background(.ultraThinMaterial)
+            .background(JWColor.surface)
             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 22, bottomLeadingRadius: 22))
             .overlay(
                 UnevenRoundedRectangle(topLeadingRadius: 22, bottomLeadingRadius: 22)
-                    .stroke(Color.white.opacity(0.60), lineWidth: 1)
+                    .stroke(JWColor.divider, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.14), radius: 30, x: -12, y: 0)
             .ignoresSafeArea(edges: .vertical)

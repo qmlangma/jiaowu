@@ -21,38 +21,20 @@ private struct AppShell: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.70, green: 0.74, blue: 0.95),
-                        Color(red: 0.80, green: 0.82, blue: 0.95),
-                        JWColor.appBackground,
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                Circle()
-                    .fill(JWColor.primary.opacity(0.12))
-                    .frame(width: 520, height: 520)
-                    .offset(x: -420, y: -320)
-                Circle()
-                    .fill(Color.white.opacity(0.45))
-                    .frame(width: 600, height: 600)
-                    .offset(x: 450, y: -260)
-            }
-            .ignoresSafeArea()
+            JWColor.appBackground.ignoresSafeArea()
 
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
                 SidebarView(isCollapsed: $isSidebarCollapsed)
-                VStack(spacing: 0) {
-                    TopBarView()
+                GeometryReader { geo in
                     ScrollView {
                         routeView
                             .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
+                            .padding(.bottom, 12)
+                            .frame(minHeight: geo.size.height, alignment: .top)
                     }
                     .scrollIndicators(.hidden)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
@@ -204,7 +186,7 @@ private struct SidebarView: View {
                                 .frame(width: 44, height: 44)
                                 .clipShape(Circle())
                             Text(store.currentStaff?.name ?? "教务老师")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(JWColor.text)
                                 .lineLimit(1)
                             Spacer(minLength: 0)
@@ -213,7 +195,7 @@ private struct SidebarView: View {
                     .padding(.horizontal, 8)
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, 16)
 
             VStack(spacing: 4) {
                 ForEach(AppRoute.allCases) { route in
@@ -228,8 +210,6 @@ private struct SidebarView: View {
                             }
                             .frame(width: 44, height: 44)
                             .foregroundStyle(store.route == route ? JWColor.primary : JWColor.textMuted)
-                            .background(store.route == route ? JWColor.primaryLight : Color.clear)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             if !isCollapsed {
                                 Text(route.rawValue)
                                     .font(.system(size: 15, weight: .semibold))
@@ -237,11 +217,36 @@ private struct SidebarView: View {
                                 Spacer(minLength: 0)
                             }
                         }
-                        .padding(.horizontal, isCollapsed ? 0 : 6)
+                        .frame(
+                            maxWidth: isCollapsed ? 44 : .infinity,
+                            alignment: isCollapsed ? .center : .leading
+                        )
+                        .frame(height: 48)
+                        .background(
+                            Group {
+                                if store.route == route {
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(.ultraThinMaterial)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                .fill(JWColor.primaryLight.opacity(0.28))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                .stroke(Color.white.opacity(0.75), lineWidth: 1)
+                                        )
+                                        .shadow(color: Color.white.opacity(0.45), radius: 1, x: 0, y: 0)
+                                        .shadow(color: JWColor.primary.opacity(0.16), radius: 10, x: 0, y: 4)
+                                }
+                            }
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, isCollapsed ? 10 : 12)
             Spacer()
             Button {
                 store.toast = "扫码页为前端占位"
@@ -256,7 +261,7 @@ private struct SidebarView: View {
                         Spacer(minLength: 0)
                     }
                 }
-                .padding(.horizontal, isCollapsed ? 0 : 6)
+                .padding(.horizontal, isCollapsed ? 2 : 10)
             }
             .buttonStyle(.plain)
             Button {
@@ -272,7 +277,7 @@ private struct SidebarView: View {
                         Spacer(minLength: 0)
                     }
                 }
-                .padding(.horizontal, isCollapsed ? 0 : 6)
+                .padding(.horizontal, isCollapsed ? 2 : 10)
             }
             .buttonStyle(.plain)
             Button {
@@ -288,17 +293,18 @@ private struct SidebarView: View {
                         Spacer(minLength: 0)
                     }
                 }
-                .padding(.horizontal, isCollapsed ? 0 : 6)
+                .padding(.horizontal, isCollapsed ? 2 : 10)
             }
             .buttonStyle(.plain)
         }
+        .padding(.horizontal, isCollapsed ? 8 : 10)
+        .padding(.vertical, 10)
         .foregroundStyle(JWColor.text)
         .frame(width: isCollapsed ? 72 : 188)
         .frame(maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.62), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: 10)
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(JWColor.divider, lineWidth: 1))
     }
 }
 
@@ -1046,14 +1052,41 @@ private struct AssessmentView: View {
         return store.testAnswers.filter { $0.sessionID == sessionID && $0.studentID == studentID }.sorted { $0.questionNo < $1.questionNo }
     }
 
+    private var sessionAnswers: [TestAnswer] {
+        guard let sessionID = store.selectedTestSessionID else { return [] }
+        return store.testAnswers.filter { $0.sessionID == sessionID }
+    }
+
+    private var pendingQuestionCount: Int {
+        sessionAnswers.filter { $0.state == .review }.count
+    }
+
+    private var activeSeat: TestSeat? {
+        guard let sid = activeStudentID else { return nil }
+        return store.selectedTestSession?.seats.first { $0.studentID == sid }
+    }
+
+    /// 未提交、仍有待判题或不具备最终分时展示占位；提交且全部已判分后展示座位上的得分。
+    private var displayedScoreText: String {
+        if answers.contains(where: { $0.state == .review }) { return "--" }
+        guard let score = activeSeat?.result else { return "--" }
+        return "\(score)"
+    }
+
+    private static let assessmentGridColumns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             VStack(spacing: 0) {
                 VStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 12) {
-                        SectionTitle(title: "批改队列", actionTitle: nil)
+                        SectionTitle(title: "全部试卷", actionTitle: nil)
                         HStack {
-                            StatusBadge(title: "待判 \(store.pendingReviewCount)", tint: JWColor.warning)
+                            StatusBadge(title: "待处理(\(pendingQuestionCount))", tint: JWColor.warning)
                             StatusBadge(title: store.selectedTestSession?.subject ?? "测评", tint: JWColor.primary)
                         }
                     }
@@ -1070,64 +1103,74 @@ private struct AssessmentView: View {
                         }
                         .padding(12)
                     }
+                    .frame(maxHeight: .infinity)
                 }
+                .frame(maxHeight: .infinity)
             }
             .background(JWColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
-            .frame(width: 360)
+            .frame(width: 290)
+            .frame(maxHeight: .infinity)
 
             VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 0) {
-                    if let studentID = activeStudentID {
-                        HStack(alignment: .center, spacing: 18) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(store.studentName(studentID))
-                                    .font(.system(size: 24, weight: .bold))
-                                Text("\(store.selectedTestSession?.title ?? "") · \(store.selectedTestSession?.subject ?? "")")
-                                    .foregroundStyle(JWColor.textMuted)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text("当前得分")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundStyle(JWColor.textMuted)
-                                Text("\(answers.filter { $0.state == .correct }.count * 3)")
-                                    .font(.system(size: 38, weight: .bold))
-                                    .foregroundStyle(JWColor.primary)
-                                    .monospacedDigit()
-                            }
-                            PrimaryButton(title: "提交", systemImage: "checkmark.seal") {
-                                if let sessionID = store.selectedTestSessionID {
-                                    store.submitAssessment(for: studentID, sessionID: sessionID)
-                                }
-                            }
-                            .frame(width: 140)
+                if let studentID = activeStudentID {
+                    HStack(alignment: .center, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(store.studentName(studentID))
+                                .font(.system(size: 24, weight: .bold))
+                            Text("\(store.selectedTestSession?.title ?? "") · \(store.selectedTestSession?.subject ?? "")")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(JWColor.textMuted)
                         }
-                        .padding(18)
-                        .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
-
-                        QuestionStrip(answers: answers)
-                            .padding(16)
-
-                        ScrollView {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 260), spacing: 12)], spacing: 12) {
-                                ForEach(answers) { answer in
-                                    AnswerCard(answer: answer)
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 16)
-                        }
-                    } else {
-                        EmptyStateView(title: "请选择需要批改的学员", systemImage: "doc.text.magnifyingglass")
+                        Spacer(minLength: 8)
+                        AssessmentScorePanel(scoreText: displayedScoreText)
                     }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 18)
+                    .padding(.bottom, 14)
+                    .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+
+                    ScrollView {
+                        LazyVGrid(columns: Self.assessmentGridColumns, spacing: 12) {
+                            ForEach(answers) { answer in
+                                AnswerCard(answer: answer)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                        .padding(.bottom, 12)
+                    }
+                    .frame(maxHeight: .infinity)
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        if activeSeat?.result == nil {
+                            VStack(spacing: 0) {
+                                Rectangle()
+                                    .fill(JWColor.divider)
+                                    .frame(height: 1)
+                                PrimaryButton(title: "提交批改", systemImage: "checkmark.seal") {
+                                    if let sessionID = store.selectedTestSessionID {
+                                        store.submitAssessment(for: studentID, sessionID: sessionID)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.top, 14)
+                                .padding(.bottom, 14)
+                            }
+                            .background(JWColor.surface)
+                        }
+                    }
+                } else {
+                    EmptyStateView(title: "请选择需要批改的学员", systemImage: "doc.text.magnifyingglass")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             .background(JWColor.surface)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+            .frame(maxHeight: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
@@ -1137,9 +1180,34 @@ private struct ReviewQueueRow: View {
     var selected: Bool
     var action: () -> Void
 
+    private var seatAnswers: [TestAnswer] {
+        guard let sessionID = store.selectedTestSessionID else { return [] }
+        return store.testAnswers.filter { $0.sessionID == sessionID && $0.studentID == seat.studentID }
+    }
+
     var pendingCount: Int {
-        guard let sessionID = store.selectedTestSessionID else { return 0 }
-        return store.testAnswers.filter { $0.sessionID == sessionID && $0.studentID == seat.studentID && $0.state == .review }.count
+        seatAnswers.filter { $0.state == .review }.count
+    }
+
+    var gradeSubjectText: String {
+        let grade = store.selectedTestSession?.grade ?? "年级"
+        return "\(grade) · \(seat.subject)"
+    }
+
+    var statusText: String {
+        if let result = seat.result {
+            return "已有分数 \(result)分"
+        }
+        if seatAnswers.contains(where: { ($0.issue ?? "").contains("答题提交失败") }) {
+            return "交卷异常"
+        }
+        return "0分待核验"
+    }
+
+    var statusTint: Color {
+        if seat.result != nil { return JWColor.success }
+        if statusText == "交卷异常" { return JWColor.danger }
+        return JWColor.warning
     }
 
     var body: some View {
@@ -1155,9 +1223,12 @@ private struct ReviewQueueRow: View {
                     Text(store.studentName(seat.studentID))
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(selected ? .white : JWColor.text)
-                    Text(seat.result.map { "已提交 \($0) 分" } ?? "待批改")
+                    Text(gradeSubjectText)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(selected ? .white.opacity(0.72) : JWColor.textMuted)
+                    Text(statusText)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(selected ? .white.opacity(0.92) : statusTint)
                 }
                 Spacer()
                 if pendingCount > 0 {
@@ -1200,15 +1271,43 @@ private struct QuestionStrip: View {
     }
 }
 
+private struct AssessmentScorePanel: View {
+    var scoreText: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("当前得分")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(JWColor.textMuted)
+            Text(scoreText)
+                .font(.system(size: 30, weight: .bold))
+                .foregroundStyle(scoreText == "--" ? JWColor.textMuted : JWColor.primary)
+                .monospacedDigit()
+                .frame(minWidth: 56)
+        }
+        .frame(minWidth: 112)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(JWColor.surfaceMuted.opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(JWColor.divider, lineWidth: 1)
+        )
+    }
+}
+
 private struct AnswerCard: View {
     @Environment(AppStore.self) private var store
     var answer: TestAnswer
 
+    private let fixedHeight: CGFloat = 206
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center) {
                 StatusBadge(title: "第 \(answer.questionNo) 题", tint: answer.state == .review ? JWColor.warning : JWColor.primary)
-                Spacer()
+                Spacer(minLength: 8)
                 HStack(spacing: 8) {
                     MarkButton(systemImage: "checkmark", tint: JWColor.success, selected: answer.state == .correct) {
                         store.markAnswer(answer.id, as: .correct)
@@ -1219,20 +1318,42 @@ private struct AnswerCard: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                AnswerLine(label: "标准答案", value: answer.officialAnswer)
-                AnswerLine(label: "学员答案", value: answer.studentAnswer, muted: answer.studentAnswer == "学生未作答")
-                if let issue = answer.issue {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                        Text(issue)
-                    }
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(JWColor.danger)
+            Spacer(minLength: 10)
+
+            VStack(alignment: .leading, spacing: 10) {
+                AnswerLine(label: "标准答案", value: answer.officialAnswer, centerValue: false)
+                if !answer.shouldHideStudentAnswer {
+                    AnswerLine(
+                        label: "学员答案",
+                        value: answer.studentAnswer,
+                        muted: answer.studentAnswer == "学生未作答",
+                        centerValue: true
+                    )
                 }
             }
+
+            Spacer(minLength: 0)
+
+            Group {
+                if let issue = answer.issue {
+                    HStack(alignment: .center, spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 12, weight: .bold))
+                        Text(issue)
+                            .font(.system(size: 12, weight: .bold))
+                            .lineLimit(3)
+                            .minimumScaleFactor(0.88)
+                            .multilineTextAlignment(.center)
+                    }
+                    .foregroundStyle(JWColor.danger)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 6)
+                }
+            }
+            .frame(height: 40, alignment: .top)
         }
         .padding(14)
+        .frame(height: fixedHeight, alignment: .top)
         .background(answer.state == .review ? JWColor.warning.opacity(0.08) : JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(answer.state == .review ? JWColor.warning.opacity(0.4) : JWColor.divider))
@@ -1249,10 +1370,18 @@ private struct MarkButton: View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(selected ? .white : tint)
+                .foregroundStyle(selected ? .white : Color(red: 0.63, green: 0.67, blue: 0.75))
                 .frame(width: 40, height: 40)
-                .background(selected ? tint : tint.opacity(0.10))
+                .background(
+                    selected
+                        ? tint
+                        : Color(red: 0.95, green: 0.96, blue: 0.98)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(selected ? Color.clear : JWColor.divider, lineWidth: 1)
+                )
         }
         .buttonStyle(.plain)
     }
@@ -1262,9 +1391,11 @@ private struct AnswerLine: View {
     var label: String
     var value: String
     var muted = false
+    /// 学员答案等场景：数值区域水平居中。
+    var centerValue = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             Text(label)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(JWColor.textMuted)
@@ -1272,6 +1403,8 @@ private struct AnswerLine: View {
             Text(value)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(muted ? JWColor.textMuted : JWColor.text)
+                .frame(maxWidth: .infinity, alignment: centerValue ? .center : .leading)
+                .multilineTextAlignment(centerValue ? .center : .leading)
         }
     }
 }

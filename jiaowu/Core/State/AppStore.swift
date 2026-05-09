@@ -350,8 +350,63 @@ final class AppStore {
         testSessions = [session]
         selectedTestSessionID = session.id
         testAnswers = students.prefix(3).flatMap { student in
-            (1...8).map { number in
-                TestAnswer(sessionID: session.id, studentID: student.id, questionNo: number, officialAnswer: number == 2 ? "1 + 2√3x" : "AgNO3 + NaCl = AgCl↓ + NaNO3", studentAnswer: number == 6 ? "学生未作答" : "\(number * 5)+3", state: number == 6 ? .correct : (number <= 3 ? .review : .wrong), issue: number <= 3 ? "OCR识别失败，请人工判断" : nil)
+            (1...10).map { number in
+                let issue: String?
+                let studentAnswer: String
+                let state: AnswerState
+
+                switch number {
+                case 1:
+                    issue = "答题提交失败，请到学生答题pad内查看"
+                    studentAnswer = "23+4"
+                    state = .review
+                case 2:
+                    issue = "答案识别失败，请手动批改"
+                    studentAnswer = "10+3"
+                    state = .review
+                case 3:
+                    issue = "批改失败，请手动批改"
+                    studentAnswer = "15+3"
+                    state = .review
+                case 4:
+                    issue = nil
+                    studentAnswer = "20+3"
+                    state = .correct
+                case 5:
+                    issue = nil
+                    studentAnswer = "25+8"
+                    state = .wrong
+                case 6:
+                    issue = nil
+                    studentAnswer = "学生未作答"
+                    state = .review
+                case 7:
+                    issue = nil
+                    studentAnswer = "35+3"
+                    state = .correct
+                case 8:
+                    issue = nil
+                    studentAnswer = "40+5"
+                    state = .wrong
+                case 9:
+                    issue = nil
+                    studentAnswer = "45+3"
+                    state = .correct
+                default:
+                    issue = nil
+                    studentAnswer = "50+1"
+                    state = .wrong
+                }
+
+                return TestAnswer(
+                    sessionID: session.id,
+                    studentID: student.id,
+                    questionNo: number,
+                    officialAnswer: number == 2 ? "1 + 2√3x" : "AgNO3 + NaCl = AgCl↓ + NaNO3",
+                    studentAnswer: studentAnswer,
+                    state: state,
+                    issue: issue
+                )
             }
         }
         creditRecords = [
