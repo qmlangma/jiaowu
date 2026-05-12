@@ -2,7 +2,7 @@
 
 ## 1. Design Principles
 - iPadOS native first: 优先使用系统语义和系统组件行为，不做“网页式”视觉拼贴。
-- Light brand expression: 通过深蓝主题色和少量品牌视觉元素建立识别，不破坏原生感。
+- Light brand expression: 通过品牌蓝主题色（`#377DF7`）和少量品牌视觉元素建立识别，不破坏原生感。
 - Content clarity: 信息密度高的教务场景中，优先保证可读性与可扫描性。
 - Single source of truth: 所有页面颜色、尺寸、圆角、阴影必须来自 `DesignSystem` token。
 
@@ -11,11 +11,20 @@
 - `Semantic`: 语义层（`brandPrimary`、`textPrimary`、`backgroundSurface` 等）。
 - `Component`: 组件层（按钮、卡片、表格行的固定尺寸、圆角、内边距）。
 
-## 3. Color Tokens (Deep Blue Theme)
+## 3. Color Tokens (Brand Blue Theme)
 - Brand:
-  - `brandPrimary`: 深蓝主色（默认强调）
-  - `brandPrimaryPressed`: 深一阶按压态
-  - `brandPrimaryLight`: 浅蓝容器背景
+  - `brandPrimary`: `#377DF7`（默认强调）
+  - `brandPrimaryPressed`: `#266BE0`（按压态）
+  - `brandPrimaryLight`: `#EAF2FF`（浅色容器背景）
+  - `accent`: `#5B96F8`（辅助强调）
+- Blue Scale（由主题色衍生）:
+  - `blue900`: `#1756C8`
+  - `blue800`: `#266BE0`
+  - `blue700`: `#377DF7`
+  - `blue600`: `#5B96F8`
+  - `blue500`: `#7DAEF9`
+  - `blue100`: `#EAF2FF`
+  - `blue050`: `#F5F9FF`
 - Surface:
   - `backgroundPage`: 页面底色
   - `backgroundSurface`: 卡片/面板底色
@@ -47,9 +56,11 @@
   - Small: 8-10
   - Medium: 12-14
   - Large sheet/card: 16-24
-- Border: 默认 `1px` 使用 `divider` 语义色。
+- Border:
+  - 页面基础卡片默认无描边，优先通过 `backgroundSurface` 与页面底色形成层次。
+  - 仅在弱按钮、输入框、可选项容器等交互元素上使用 `1px divider` 描边。
 - Shadow:
-  - 卡片：弱阴影（y=2~4）
+  - 卡片：极弱阴影或无阴影（iPad 原生优先）
   - 弹窗/抽屉：中等阴影（y=8~18）
 
 ## 7. Icon Rules (SF Symbols)
@@ -68,4 +79,3 @@
 - 所有可点击元素 >= 44pt。
 - 支持 Dynamic Type 不破版。
 - 关键 icon-only 按钮需提供可访问标签。
-

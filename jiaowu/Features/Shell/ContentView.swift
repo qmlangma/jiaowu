@@ -23,21 +23,22 @@ private struct AppShell: View {
         ZStack(alignment: .top) {
             JWColor.appBackground.ignoresSafeArea()
 
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
                 SidebarView(isCollapsed: $isSidebarCollapsed)
                 GeometryReader { geo in
                     ScrollView {
                         routeView
-                            .padding(.horizontal, 12)
-                            .padding(.bottom, 12)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 0)
+                            .padding(.bottom, 20)
                             .frame(minHeight: geo.size.height, alignment: .top)
                     }
                     .scrollIndicators(.hidden)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
 
             if let toast = store.toast {
                 Text(toast)
@@ -45,8 +46,8 @@ private struct AppShell: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
                     .frame(minHeight: 44)
-                    .background(JWColor.rail.opacity(0.96))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(JWColor.text)
+                    .clipShape(Capsule())
                     .padding(.top, 18)
                     .onTapGesture { store.toast = nil }
             }
@@ -110,20 +111,20 @@ private struct CampusPickDialog: View {
                         ForEach(store.campuses) { campus in
                             CampusGridItem(
                                 name: campus.name,
-                                isSelected: store.pendingCampusSelectionID == campus.id
+                                isSelected: store.currentCampus?.id == campus.id
                             ) {
+                                guard store.currentCampus?.id != campus.id else {
+                                    store.shouldPresentCampusDialog = false
+                                    return
+                                }
                                 store.pendingCampusSelectionID = campus.id
+                                store.confirmPendingCampusSelection()
+                                store.toast = "已切换到\(campus.name)"
                             }
                         }
                     }
                 }
                 .frame(maxHeight: 360)
-
-                PrimaryButton(title: "确认选择", systemImage: "checkmark") {
-                    store.confirmPendingCampusSelection()
-                }
-                .opacity(store.pendingCampusSelectionID == nil ? 0.55 : 1)
-                .allowsHitTesting(store.pendingCampusSelectionID != nil)
             }
             .padding(20)
             .frame(width: 760)
@@ -150,11 +151,19 @@ private struct CampusGridItem: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(JWColor.primary)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(JWColor.textMuted)
                 }
             }
             .padding(.horizontal, 12)
             .frame(height: 48)
-            .background(isSelected ? JWColor.primaryLight : JWColor.surfaceMuted)
+            .background(isSelected ? JWColor.primaryLight : JWColor.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? JWColor.primary.opacity(0.35) : JWColor.divider, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -194,6 +203,7 @@ private struct SidebarView: View {
                         HeaderIconButton(systemImage: "ellipsis") {
                             isLogoutConfirmPresented = true
                         }
+                        .rotationEffect(.degrees(90))
                     }
                     .padding(.horizontal, 8)
                 }
@@ -252,11 +262,10 @@ private struct SidebarView: View {
         .padding(.horizontal, isCollapsed ? 8 : 10)
         .padding(.vertical, 10)
         .foregroundStyle(JWColor.text)
-        .frame(width: isCollapsed ? 72 : 188)
+        .frame(width: isCollapsed ? 72 : 208)
         .frame(maxHeight: .infinity)
         .background(JWColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(JWColor.divider, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .alert("退出登录", isPresented: $isLogoutConfirmPresented) {
             Button("取消", role: .cancel) {}
             Button("退出", role: .destructive) {
@@ -265,7 +274,7 @@ private struct SidebarView: View {
         } message: {
             Text("确认退出当前账号吗？")
         }
-        .frame(width: isCollapsed ? 72 : 188)
+        .frame(width: isCollapsed ? 72 : 208)
     }
 }
 
@@ -279,8 +288,6 @@ private struct HeaderIconButton: View {
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(JWColor.text.opacity(0.72))
                 .frame(width: 30, height: 30)
-                .background(JWColor.surfaceMuted)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -309,7 +316,11 @@ private struct SidebarToolButton: View {
             .padding(.horizontal, isCollapsed ? 0 : 12)
             .frame(maxWidth: isCollapsed ? 44 : .infinity, alignment: isCollapsed ? .center : .leading)
             .frame(height: 40)
-            .background(JWColor.surfaceMuted.opacity(0.65))
+            .background(JWColor.surfaceMuted.opacity(0.18))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(JWColor.divider.opacity(0.7), lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
