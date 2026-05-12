@@ -111,7 +111,7 @@ private struct LoginBrandPanel: View {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .stroke(Color.white.opacity(0.42), lineWidth: 1)
                     )
-                Text("教务工作台")
+                Text("时光胶囊-原型")
                     .font(.system(size: 54, weight: .bold))
                     .foregroundStyle(.white)
                 Text("课表、学员、测评、订单一体化管理")
@@ -190,4 +190,3 @@ private struct LoginActionPanel: View {
         .shadow(color: Color.black.opacity(0.10), radius: 24, x: 0, y: 12)
     }
 }
-

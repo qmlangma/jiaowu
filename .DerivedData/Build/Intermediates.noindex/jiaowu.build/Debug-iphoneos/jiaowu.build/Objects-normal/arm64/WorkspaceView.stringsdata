@@ -1,0 +1,24 @@
+{
+  "source": "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Workspace/WorkspaceView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "今日运营概览",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 10
+        }
+      },
+      {
+        "comment": "",
+        "key": "面向校区老师的待办队列，优先处理异常、签到和批改。",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 12
+        }
+      }
+    ]
+  },
+  "version": 1
+}

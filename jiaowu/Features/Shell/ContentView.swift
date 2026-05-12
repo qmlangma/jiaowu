@@ -164,12 +164,14 @@ private struct CampusGridItem: View {
 private struct SidebarView: View {
     @Environment(AppStore.self) private var store
     @Binding var isCollapsed: Bool
+    @State private var isLogoutConfirmPresented = false
+    private let primaryRoutes: [AppRoute] = [.workspace, .students, .schedule, .attendance, .orders]
 
     var body: some View {
         VStack(spacing: 10) {
             Group {
                 if isCollapsed {
-                    VStack(spacing: 6) {
+                    HStack(spacing: 0) {
                         Image("DefaultAvatar")
                             .resizable()
                             .scaledToFill()
@@ -178,18 +180,19 @@ private struct SidebarView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                 } else {
-                    VStack(spacing: 8) {
-                        HStack(spacing: 10) {
-                            Image("DefaultAvatar")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 44, height: 44)
-                                .clipShape(Circle())
-                            Text(store.currentStaff?.name ?? "教务老师")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(JWColor.text)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
+                    HStack(spacing: 10) {
+                        Image("DefaultAvatar")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 44, height: 44)
+                            .clipShape(Circle())
+                        Text(store.currentStaff?.name ?? "教务老师")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(JWColor.text)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                        HeaderIconButton(systemImage: "ellipsis") {
+                            isLogoutConfirmPresented = true
                         }
                     }
                     .padding(.horizontal, 8)
@@ -198,49 +201,29 @@ private struct SidebarView: View {
             .padding(.top, 16)
 
             VStack(spacing: 4) {
-                ForEach(AppRoute.allCases) { route in
+                ForEach(primaryRoutes) { route in
                     Button {
                         store.navigate(route)
                     } label: {
                         HStack(spacing: 10) {
-                            VStack(spacing: 5) {
-                                Image(systemName: route.symbol)
-                                    .font(.system(size: 17, weight: .medium))
-                                    .symbolRenderingMode(.hierarchical)
-                            }
-                            .frame(width: 44, height: 44)
-                            .foregroundStyle(store.route == route ? JWColor.primary : JWColor.textMuted)
+                            Image(systemName: route.symbol)
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 28, height: 28)
+                                .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text.opacity(0.68))
                             if !isCollapsed {
                                 Text(route.rawValue)
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text)
+                                    .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text.opacity(0.78))
                                 Spacer(minLength: 0)
                             }
                         }
-                        .frame(
-                            maxWidth: isCollapsed ? 44 : .infinity,
-                            alignment: isCollapsed ? .center : .leading
-                        )
-                        .frame(height: 48)
+                        .padding(.horizontal, isCollapsed ? 0 : 12)
+                        .frame(maxWidth: isCollapsed ? 44 : .infinity, alignment: isCollapsed ? .center : .leading)
+                        .frame(height: 44)
                         .background(
-                            Group {
-                                if store.route == route {
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .fill(JWColor.primaryLight.opacity(0.28))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .stroke(Color.white.opacity(0.75), lineWidth: 1)
-                                        )
-                                        .shadow(color: Color.white.opacity(0.45), radius: 1, x: 0, y: 0)
-                                        .shadow(color: JWColor.primary.opacity(0.16), radius: 10, x: 0, y: 4)
-                                }
-                            }
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(store.route == route ? JWColor.text.opacity(0.08) : .clear)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -248,54 +231,23 @@ private struct SidebarView: View {
             }
             .padding(.horizontal, isCollapsed ? 10 : 12)
             Spacer()
-            Button {
-                store.toast = "扫码页为前端占位"
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.system(size: 22, weight: .semibold))
-                        .frame(width: 44, height: 44)
-                    if !isCollapsed {
-                        Text("扫码")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer(minLength: 0)
-                    }
+
+            VStack(spacing: 8) {
+                SidebarToolButton(systemImage: "qrcode.viewfinder", title: "扫一扫", isCollapsed: isCollapsed) {
+                    store.toast = "扫码页为前端占位"
                 }
-                .padding(.horizontal, isCollapsed ? 2 : 10)
-            }
-            .buttonStyle(.plain)
-            Button {
-                store.isLoggedIn = false
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 22, weight: .bold))
-                        .frame(width: 44, height: 40)
-                    if !isCollapsed {
-                        Text("退出登录")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer(minLength: 0)
-                    }
+                SidebarToolButton(systemImage: "building.2", title: "校区教室", isCollapsed: isCollapsed) {
+                    store.navigate(.attendance)
+                    store.toast = "已跳转考勤页，可进入教室管理"
                 }
-                .padding(.horizontal, isCollapsed ? 2 : 10)
-            }
-            .buttonStyle(.plain)
-            Button {
-                isCollapsed.toggle()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: isCollapsed ? "sidebar.leading" : "sidebar.left")
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(width: 44, height: 40)
-                    if !isCollapsed {
-                        Text(isCollapsed ? "展开侧栏" : "收起侧栏")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer(minLength: 0)
-                    }
+                SidebarToolButton(
+                    systemImage: isCollapsed ? "sidebar.leading" : "sidebar.left",
+                    title: isCollapsed ? "展开侧栏" : "收起侧栏",
+                    isCollapsed: isCollapsed
+                ) {
+                    isCollapsed.toggle()
                 }
-                .padding(.horizontal, isCollapsed ? 2 : 10)
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, isCollapsed ? 8 : 10)
         .padding(.vertical, 10)
@@ -305,6 +257,62 @@ private struct SidebarView: View {
         .background(JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20).stroke(JWColor.divider, lineWidth: 1))
+        .alert("退出登录", isPresented: $isLogoutConfirmPresented) {
+            Button("取消", role: .cancel) {}
+            Button("退出", role: .destructive) {
+                store.isLoggedIn = false
+            }
+        } message: {
+            Text("确认退出当前账号吗？")
+        }
+        .frame(width: isCollapsed ? 72 : 188)
+    }
+}
+
+private struct HeaderIconButton: View {
+    var systemImage: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(JWColor.text.opacity(0.72))
+                .frame(width: 30, height: 30)
+                .background(JWColor.surfaceMuted)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct SidebarToolButton: View {
+    var systemImage: String
+    var title: String
+    var isCollapsed: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .foregroundStyle(JWColor.text.opacity(0.72))
+                if !isCollapsed {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(JWColor.text.opacity(0.78))
+                    Spacer(minLength: 0)
+                }
+            }
+            .padding(.horizontal, isCollapsed ? 0 : 12)
+            .frame(maxWidth: isCollapsed ? 44 : .infinity, alignment: isCollapsed ? .center : .leading)
+            .frame(height: 40)
+            .background(JWColor.surfaceMuted.opacity(0.65))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 
