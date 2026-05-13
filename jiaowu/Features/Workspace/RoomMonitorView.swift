@@ -43,13 +43,6 @@ struct RoomMonitorView: View {
         .padding(20)
         .background(JWColor.surface.opacity(0.70))
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .gesture(
-            DragGesture(minimumDistance: 26)
-                .onEnded { value in
-                    guard abs(value.translation.height) > abs(value.translation.width) else { return }
-                    shiftFloor(upward: value.translation.height < 0)
-                }
-        )
     }
 
     private var periodPicker: some View {
@@ -114,16 +107,6 @@ struct RoomMonitorView: View {
     private var filteredSessions: [RoomSession] {
         sessions.filter { session in
             (selectedFloor == .all || session.floor == selectedFloor) && (!hideIdleRooms || session.status != .idle)
-        }
-    }
-
-    private func shiftFloor(upward: Bool) {
-        let floors = RoomFloor.allCases
-        guard let currentIndex = floors.firstIndex(of: selectedFloor) else { return }
-        if upward {
-            selectedFloor = floors[min(currentIndex + 1, floors.count - 1)]
-        } else {
-            selectedFloor = floors[max(currentIndex - 1, 0)]
         }
     }
 
@@ -202,8 +185,9 @@ struct RoomMonitorView: View {
         }
         .foregroundStyle(JWColor.text)
         .frame(height: 48)
-        .background(JWColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(4)
+        .background(JWColor.appBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 

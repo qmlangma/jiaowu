@@ -23,13 +23,11 @@ private struct AppShell: View {
         ZStack(alignment: .top) {
             JWColor.appBackground.ignoresSafeArea()
 
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 16) {
                 SidebarView(isCollapsed: $isSidebarCollapsed)
                 GeometryReader { geo in
                     ScrollView {
                         routeView
-                            .padding(.horizontal, 20)
-                            .padding(.top, 0)
                             .padding(.bottom, 20)
                             .frame(minHeight: geo.size.height, alignment: .top)
                     }

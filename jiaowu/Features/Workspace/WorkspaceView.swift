@@ -6,7 +6,7 @@ struct WorkspaceView: View {
     @State private var isSearchFocused = false
     @State private var selectedPeriod: WorkspaceTimePeriod = .afternoon
     @State private var selectedDate = WorkspaceMockData.today
-    @State private var selectedFloor: RoomFloor = .first
+    @State private var selectedFloor: RoomFloor = .all
     @State private var hideIdleRooms = true
     @State private var reservedRooms: Set<UUID> = []
     @State private var reservationDraft: RoomReservationDraft?
@@ -33,51 +33,56 @@ struct WorkspaceView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .topLeading) {
-                VStack(alignment: .leading, spacing: AppSpacing.large) {
-                    WorkspaceHeaderView(
-                        campusName: store.currentCampus?.name ?? "请选择校区",
-                        summaries: WorkspaceMockData.summaries,
-                        searchText: $searchText,
-                        isSearchFocused: $isSearchFocused,
-                        studentResults: WorkspaceMockData.studentResults,
-                        classResults: WorkspaceMockData.classResults,
-                        teacherResults: WorkspaceMockData.teacherResults,
-                        selectStudent: { selectedStudent = $0 },
-                        selectClass: { selectedSession = $0.session },
-                        selectTeacher: { store.toast = "已打开\($0.name)今日班级" },
-                        openCampus: {
-                            store.pendingCampusSelectionID = store.currentCampus?.id
-                            store.shouldPresentCampusDialog = true
-                        },
-                        openAlerts: {
-                            withAnimation(.easeInOut(duration: 0.22)) {
-                                isAlertCollapsed = false
-                            }
-                        },
-                        hasUnreadAlerts: !WorkspaceMockData.alerts.isEmpty,
-                        alarmOn: $alarmOn,
-                        lightOn: $lightOn,
-                        webOn: $webOn
-                    )
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: AppSpacing.large) {
+                        WorkspaceHeaderView(
+                            campusName: store.currentCampus?.name ?? "请选择校区",
+                            summaries: WorkspaceMockData.summaries,
+                            searchText: $searchText,
+                            isSearchFocused: $isSearchFocused,
+                            studentResults: WorkspaceMockData.studentResults,
+                            classResults: WorkspaceMockData.classResults,
+                            teacherResults: WorkspaceMockData.teacherResults,
+                            selectStudent: { selectedStudent = $0 },
+                            selectClass: { selectedSession = $0.session },
+                            selectTeacher: { store.toast = "已打开\($0.name)今日班级" },
+                            openCampus: {
+                                store.pendingCampusSelectionID = store.currentCampus?.id
+                                store.shouldPresentCampusDialog = true
+                            },
+                            openAlerts: {
+                                withAnimation(.easeInOut(duration: 0.22)) {
+                                    isAlertCollapsed = false
+                                }
+                            },
+                            hasUnreadAlerts: !WorkspaceMockData.alerts.isEmpty,
+                            alarmOn: $alarmOn,
+                            lightOn: $lightOn,
+                            webOn: $webOn
+                        )
 
-                    QuickActionGridView(
-                        actions: WorkspaceMockData.quickActions,
-                        handleAction: handleQuickAction
-                    )
+                        QuickActionGridView(
+                            actions: WorkspaceMockData.quickActions,
+                            handleAction: handleQuickAction
+                        )
 
-                    RoomMonitorView(
-                        selectedPeriod: $selectedPeriod,
-                        selectedDate: $selectedDate,
-                        sessions: roomSessions,
-                        selectedFloor: $selectedFloor,
-                        hideIdleRooms: $hideIdleRooms,
-                        previousDate: { selectedDate = selectedDate.addingTimeInterval(-86_400) },
-                        nextDate: { selectedDate = selectedDate.addingTimeInterval(86_400) },
-                        viewClass: { selectedSession = $0 },
-                        viewRoster: { selectedSession = $0 },
-                        reserveRoom: { reservationDraft = RoomReservationDraft(room: $0.roomName, dateText: selectedDate.displayText, period: selectedPeriod.title) }
-                    )
+                        RoomMonitorView(
+                            selectedPeriod: $selectedPeriod,
+                            selectedDate: $selectedDate,
+                            sessions: roomSessions,
+                            selectedFloor: $selectedFloor,
+                            hideIdleRooms: $hideIdleRooms,
+                            previousDate: { selectedDate = selectedDate.addingTimeInterval(-86_400) },
+                            nextDate: { selectedDate = selectedDate.addingTimeInterval(86_400) },
+                            viewClass: { selectedSession = $0 },
+                            viewRoster: { selectedSession = $0 },
+                            reserveRoom: { reservationDraft = RoomReservationDraft(room: $0.roomName, dateText: selectedDate.displayText, period: selectedPeriod.title) }
+                        )
+                    }
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .padding(.bottom, 20)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
                 if !isAlertCollapsed {
                     HStack {

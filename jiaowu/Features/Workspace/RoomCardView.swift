@@ -23,15 +23,16 @@ struct RoomCardView: View {
             } else {
                 sessionContent
             }
-
-            Spacer(minLength: 0)
         }
         .padding(18)
         .frame(minHeight: 238, alignment: .top)
-        .background(session.status.surface)
+        .background(JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.65), lineWidth: 1))
-        .shadow(color: Color.black.opacity(session.status == .idle ? 0.035 : 0.06), radius: 16, x: 0, y: 8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(JWColor.divider.opacity(0.7), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.025), radius: 10, x: 0, y: 4)
         .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .onTapGesture {
             if session.status == .idle {
@@ -44,9 +45,6 @@ struct RoomCardView: View {
 
     private var idleContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(session.time, systemImage: "clock.badge.checkmark")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(JWColor.textMuted)
             Text("可容纳 \(session.capacity) 人")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(JWColor.text)
@@ -61,19 +59,22 @@ struct RoomCardView: View {
                     idleDeviceTag(title: "无设备", icon: "exclamationmark.triangle.fill")
                 }
             }
+            Label(session.time, systemImage: "clock.badge.checkmark")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(JWColor.textMuted)
+            Spacer(minLength: 0)
             Button(action: reserveRoom) {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Image(systemName: "calendar.badge.plus")
                     Text("预约教室")
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .bold))
                 }
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(JWColor.primary)
-                .padding(.horizontal, 12)
-                .frame(height: 34)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
                 .background(JWColor.primary.opacity(0.10))
-                .clipShape(Capsule())
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .buttonStyle(.plain)
         }
@@ -89,6 +90,7 @@ struct RoomCardView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(JWColor.textMuted)
             attendanceButton
+            Spacer(minLength: 0)
             HStack(spacing: 8) {
                 staffStatusTile(
                     roleTitle: "老师",
@@ -107,40 +109,57 @@ struct RoomCardView: View {
     }
 
     private var statusBadge: some View {
-        HStack(spacing: 7) {
+        let isIdle = session.status == .idle
+        let tint = isIdle ? JWColor.primary : session.status.tint
+        let title = isIdle ? "空闲可预约" : (session.status == .running ? "进行中" : session.status.rawValue)
+
+        return HStack(spacing: 7) {
             if session.status == .running {
                 TimelineView(.animation(minimumInterval: 0.8, paused: false)) { timeline in
                     let phase = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.6)
                     Circle()
-                        .fill(session.status.tint)
+                        .fill(tint)
                         .frame(width: 8, height: 8)
                         .scaleEffect(phase < 0.8 ? 1 : 0.6)
                         .opacity(phase < 0.8 ? 1 : 0.45)
                 }
                 .frame(width: 8, height: 8)
+            } else if isIdle {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(tint)
             }
-            Text(session.status == .running ? "进行中" : session.status.rawValue)
+            Text(title)
                 .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(session.status.tint)
+                .foregroundStyle(tint)
         }
         .padding(.horizontal, 10)
         .frame(height: 30)
-        .background(session.status.tint.opacity(0.13))
+        .background(tint.opacity(isIdle ? 0.16 : 0.13))
         .clipShape(Capsule())
     }
 
     private var attendanceButton: some View {
         Button(action: viewRoster) {
             HStack(spacing: 6) {
-                Text("已到/总学员：\(session.arrived)/\(session.expected)")
+                HStack(spacing: 0) {
+                    Text("已到学员：")
+                    Text("\(session.arrived)")
+                        .foregroundStyle(JWColor.primary)
+                    Text("/\(session.expected)")
+                }
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 10, weight: .semibold))
             }
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(JWColor.primary)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(JWColor.textMuted)
             .padding(.horizontal, 12)
             .frame(height: 32)
-            .background(JWColor.primary.opacity(0.10))
+            .background(JWColor.appBackground)
+            .overlay(
+                Capsule()
+                    .stroke(JWColor.divider, lineWidth: 1)
+            )
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
