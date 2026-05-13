@@ -51,10 +51,13 @@ private struct AppShell: View {
                     .padding(.top, 18)
                     .onTapGesture { store.toast = nil }
             }
-
-            if store.shouldPresentCampusDialog {
-                CampusPickDialog()
-            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { store.shouldPresentCampusDialog },
+            set: { store.shouldPresentCampusDialog = $0 }
+        )) {
+            CampusPickerFullScreen()
+                .presentationBackground(.clear)
         }
         .onChange(of: store.toast) { _, newValue in
             guard newValue != nil else { return }
@@ -79,60 +82,139 @@ private struct AppShell: View {
     }
 }
 
-private struct CampusPickDialog: View {
+private struct CampusPickerFullScreen: View {
     @Environment(AppStore.self) private var store
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.22)
                 .ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("请选择工作校区")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(JWColor.text)
-                    Spacer()
-                    Button {
-                        store.shouldPresentCampusDialog = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(JWColor.textMuted)
-                            .frame(width: 30, height: 30)
-                            .background(JWColor.surfaceMuted)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
+                .onTapGesture {
+                    store.shouldPresentCampusDialog = false
                 }
 
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                CampusPickDialog()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: UIScreen.main.bounds.height * 0.88)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    )
+            }
+            .ignoresSafeArea(edges: .bottom)
+        }
+        .background(Color.clear)
+    }
+}
+
+private struct CampusPickDialog: View {
+    @Environment(AppStore.self) private var store
+    @State private var selectedRegion = "蜀山区"
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
+    private let regionOrder = ["蜀山区", "政务区", "瑶海区", "庐阳区"]
+
+    private var campusesByRegion: [(region: String, campuses: [Campus])] {
+        let buckets = Dictionary(grouping: Array(store.campuses.enumerated())) { item in
+            regionOrder[item.offset % regionOrder.count]
+        }
+        return regionOrder.map { region in
+            (region, buckets[region]?.map(\.element) ?? [])
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Capsule()
+                .fill(JWColor.divider)
+                .frame(width: 48, height: 6)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 8)
+
+            HStack(spacing: 12) {
+                Label("选择工作校区", systemImage: "location.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(JWColor.text)
+                Spacer()
+                Button {
+                    store.shouldPresentCampusDialog = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(JWColor.textMuted)
+                        .frame(width: 32, height: 32)
+                        .background(JWColor.surfaceMuted)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+
+            ScrollViewReader { proxy in
+                HStack(spacing: 8) {
+                    ForEach(regionOrder, id: \.self) { region in
+                        Button {
+                            selectedRegion = region
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                proxy.scrollTo(region, anchor: .top)
+                            }
+                        } label: {
+                            Text(region)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(selectedRegion == region ? JWColor.primary : JWColor.textMuted)
+                                .padding(.horizontal, 14)
+                                .frame(height: 34)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                        .fill(selectedRegion == region ? JWColor.primaryLight : JWColor.surfaceMuted)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                        .stroke(selectedRegion == region ? JWColor.primary.opacity(0.35) : JWColor.divider, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 ScrollView {
-                    LazyVGrid(columns: columns, spacing: 10) {
-                        ForEach(store.campuses) { campus in
-                            CampusGridItem(
-                                name: campus.name,
-                                isSelected: store.currentCampus?.id == campus.id
-                            ) {
-                                guard store.currentCampus?.id != campus.id else {
-                                    store.shouldPresentCampusDialog = false
-                                    return
+                    VStack(alignment: .leading, spacing: 20) {
+                        ForEach(campusesByRegion, id: \.region) { section in
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(section.region)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(JWColor.text)
+                                    .id(section.region)
+
+                                LazyVGrid(columns: columns, spacing: 10) {
+                                    ForEach(section.campuses) { campus in
+                                        CampusGridItem(
+                                            name: campus.name,
+                                            isSelected: store.currentCampus?.id == campus.id
+                                        ) {
+                                            guard store.currentCampus?.id != campus.id else {
+                                                store.shouldPresentCampusDialog = false
+                                                return
+                                            }
+                                            store.pendingCampusSelectionID = campus.id
+                                            store.confirmPendingCampusSelection()
+                                            store.toast = "已切换到\(campus.name)"
+                                            store.shouldPresentCampusDialog = false
+                                        }
+                                    }
                                 }
-                                store.pendingCampusSelectionID = campus.id
-                                store.confirmPendingCampusSelection()
-                                store.toast = "已切换到\(campus.name)"
                             }
                         }
                     }
+                    .padding(.top, 4)
                 }
-                .frame(maxHeight: 360)
             }
-            .padding(20)
-            .frame(width: 760)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(JWColor.divider))
-            .shadow(color: .black.opacity(0.1), radius: 22, x: 0, y: 10)
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 18)
+        .padding(.top, 16)
+        .padding(.bottom, 22)
+        .background(JWColor.surface)
     }
 }
 
@@ -174,43 +256,77 @@ private struct SidebarView: View {
     @Environment(AppStore.self) private var store
     @Binding var isCollapsed: Bool
     @State private var isLogoutConfirmPresented = false
-    private let primaryRoutes: [AppRoute] = [.workspace, .students, .schedule, .attendance, .orders]
+    private let primaryRoutes: [AppRoute] = [.workspace, .assessment, .courseSelection, .schedule, .orders, .students, .attendance]
 
     var body: some View {
+        let edgeInset: CGFloat = 14
         VStack(spacing: 10) {
-            Group {
-                if isCollapsed {
-                    HStack(spacing: 0) {
-                        Image("DefaultAvatar")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 44, height: 44)
-                            .clipShape(Circle())
+            if isCollapsed {
+                Image("DefaultAvatar")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .padding(.top, edgeInset)
+            } else {
+                HStack(spacing: 10) {
+                    Image("DefaultAvatar")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 34, height: 34)
+                        .clipShape(Circle())
+                    Text(store.currentStaff?.name ?? "教务老师")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(JWColor.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.84)
+                        .layoutPriority(1)
+                    Spacer(minLength: 0)
+                    HeaderIconButton(systemImage: "ellipsis") {
+                        isLogoutConfirmPresented = true
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                } else {
-                    HStack(spacing: 10) {
-                        Image("DefaultAvatar")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 44, height: 44)
-                            .clipShape(Circle())
-                        Text(store.currentStaff?.name ?? "教务老师")
-                            .font(.system(size: 16, weight: .semibold))
+                    .rotationEffect(.degrees(90))
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, edgeInset)
+                .padding(.bottom, 4)
+
+                Button {
+                    store.pendingCampusSelectionID = store.currentCampus?.id
+                    store.shouldPresentCampusDialog = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(JWColor.text.opacity(0.72))
+                        Text(store.currentCampus?.name ?? "请选择校区")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(JWColor.text)
                             .lineLimit(1)
                         Spacer(minLength: 0)
-                        HeaderIconButton(systemImage: "ellipsis") {
-                            isLogoutConfirmPresented = true
-                        }
-                        .rotationEffect(.degrees(90))
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(JWColor.text.opacity(0.6))
                     }
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 10)
+                    .frame(height: 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(JWColor.text.opacity(0.06))
+                    )
                 }
-            }
-            .padding(.top, 16)
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 10)
 
-            VStack(spacing: 4) {
+                Rectangle()
+                    .fill(JWColor.divider)
+                    .frame(height: 1)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 12)
+            }
+
+            VStack(spacing: 8) {
                 ForEach(primaryRoutes) { route in
                     Button {
                         store.navigate(route)
@@ -242,27 +358,50 @@ private struct SidebarView: View {
             .padding(.horizontal, isCollapsed ? 10 : 12)
             Spacer()
 
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 SidebarToolButton(systemImage: "qrcode.viewfinder", title: "扫一扫", isCollapsed: isCollapsed) {
                     store.toast = "扫码页为前端占位"
                 }
-                SidebarToolButton(systemImage: "building.2", title: "校区教室", isCollapsed: isCollapsed) {
-                    store.navigate(.attendance)
-                    store.toast = "已跳转考勤页，可进入教室管理"
+
+                if isCollapsed {
+                    Button {
+                        store.pendingCampusSelectionID = store.currentCampus?.id
+                        store.shouldPresentCampusDialog = true
+                    } label: {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(JWColor.text.opacity(0.78))
+                            .frame(width: 38, height: 38)
+                            .background(JWColor.text.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    HeaderIconButton(systemImage: "ellipsis") {
+                        isLogoutConfirmPresented = true
+                    }
+                    .rotationEffect(.degrees(90))
+                } else {
+                    SidebarToolButton(
+                        systemImage: "sidebar.left",
+                        title: "收起侧栏",
+                        isCollapsed: false
+                    ) {
+                        isCollapsed.toggle()
+                    }
                 }
-                SidebarToolButton(
-                    systemImage: isCollapsed ? "sidebar.leading" : "sidebar.left",
-                    title: isCollapsed ? "展开侧栏" : "收起侧栏",
-                    isCollapsed: isCollapsed
-                ) {
-                    isCollapsed.toggle()
+
+                if isCollapsed {
+                    SidebarToolButton(systemImage: "sidebar.leading", title: "展开侧栏", isCollapsed: true) {
+                        isCollapsed.toggle()
+                    }
                 }
             }
         }
-        .padding(.horizontal, isCollapsed ? 8 : 10)
-        .padding(.vertical, 10)
+        .padding(.horizontal, isCollapsed ? 8 : 8)
+        .padding(.top, 10)
+        .padding(.bottom, edgeInset)
         .foregroundStyle(JWColor.text)
-        .frame(width: isCollapsed ? 72 : 208)
+        .frame(width: isCollapsed ? 72 : 166)
         .frame(maxHeight: .infinity)
         .background(JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -274,7 +413,7 @@ private struct SidebarView: View {
         } message: {
             Text("确认退出当前账号吗？")
         }
-        .frame(width: isCollapsed ? 72 : 208)
+        .frame(width: isCollapsed ? 72 : 166)
     }
 }
 
@@ -285,9 +424,9 @@ private struct HeaderIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(JWColor.text.opacity(0.72))
-                .frame(width: 30, height: 30)
+                .frame(width: 26, height: 26)
         }
         .buttonStyle(.plain)
     }
@@ -355,7 +494,7 @@ private struct TopBarView: View {
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.58)))
             HStack(spacing: 12) {
                 Label("2026-05-07 周四", systemImage: "calendar")
-                Label(store.currentCampus?.name ?? "XiangShuW", systemImage: "mappin.and.ellipse")
+                Label(store.currentCampus?.name ?? "XiangShuW", systemImage: "location.fill")
             }
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(JWColor.textMuted)

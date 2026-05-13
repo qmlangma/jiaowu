@@ -3,24 +3,24 @@ import SwiftUI
 
 enum AppRoute: String, CaseIterable, Identifiable {
     case workspace = "工作台"
-    case students = "学员"
+    case assessment = "入学测"
     case courseSelection = "选课"
     case schedule = "课表"
-    case attendance = "考勤"
-    case assessment = "测评"
     case orders = "订单"
+    case students = "优惠"
+    case attendance = "审批"
 
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
         case .workspace: "house.fill"
-        case .students: "person.2.fill"
+        case .assessment: "doc.text.magnifyingglass"
         case .courseSelection: "graduationcap.fill"
-        case .schedule: "calendar.badge.clock"
-        case .attendance: "checkmark.seal.fill"
-        case .assessment: "doc.text.fill"
+        case .schedule: "building.2.fill"
         case .orders: "creditcard.fill"
+        case .students: "tag.fill"
+        case .attendance: "checkmark.seal.fill"
         }
     }
 }

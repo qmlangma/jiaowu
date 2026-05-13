@@ -55,6 +55,13 @@ enum JWColor {
     static let rail = JWPrimitive.blue100
 }
 
+enum AppSpacing {
+    static let small: CGFloat = 10
+    static let medium: CGFloat = 16
+    static let large: CGFloat = 20
+    static let xlarge: CGFloat = 28
+}
+
 struct AppCard<Content: View>: View {
     var padding: CGFloat = 16
     @ViewBuilder var content: Content
