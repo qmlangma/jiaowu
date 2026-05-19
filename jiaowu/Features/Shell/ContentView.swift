@@ -797,7 +797,6 @@ private struct SignupSuccessModal: View {
 private struct ScheduleView: View {
     @Environment(AppStore.self) private var store
     @State private var showReorder = false
-    @State private var consultCount = ""
 
     var body: some View {
         VStack(spacing: 14) {
@@ -811,15 +810,27 @@ private struct ScheduleView: View {
                     HStack {
                         SectionTitle(title: session.title)
                         Spacer()
-                        SecondaryButton(title: "重新排座", systemImage: "arrow.up.arrow.down") { showReorder = true }
+                        if store.sessionState.activeTab == .seats {
+                            SecondaryButton(title: "重新排座", systemImage: "arrow.up.arrow.down") { showReorder = true }
+                        }
                         SecondaryButton(title: "试卷批改", systemImage: "doc.text.magnifyingglass") { store.navigate(.assessment) }
                     }
-                    ScheduleTable(session: session)
+                    SessionOperationTabBar(activeTab: store.sessionState.activeTab) { tab in
+                        store.setSessionTab(tab)
+                    }
+                    switch store.sessionState.activeTab {
+                    case .seats:
+                        ScheduleTable(session: session)
+                    case .attendance:
+                        SessionAttendanceTable(session: session)
+                    case .marking:
+                        SessionMarkingTable(session: session)
+                    }
                 }
-                .padding(16)
+                .padding(24)
                 .background(JWColor.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(JWColor.divider))
             }
         }
         .overlay {
@@ -836,6 +847,33 @@ private struct ScheduleView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+private struct SessionOperationTabBar: View {
+    var activeTab: SessionOperationTab
+    var setTab: (SessionOperationTab) -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(SessionOperationTab.allCases) { tab in
+                Button(action: { setTab(tab) }) {
+                    Text(tab.rawValue)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(activeTab == tab ? JWColor.primary : JWColor.textMuted)
+                        .padding(.horizontal, 14)
+                        .frame(height: 36)
+                        .background(activeTab == tab ? JWColor.primaryLight : JWColor.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .stroke(activeTab == tab ? JWColor.primary : JWColor.divider, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
         }
     }
 }
@@ -942,6 +980,110 @@ private struct ScheduleTable: View {
                 }
                 .font(.system(size: 14, weight: .medium))
                 .padding(.vertical, 16)
+                .padding(.horizontal, 12)
+                .background(JWColor.surface)
+                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+            }
+        }
+    }
+}
+
+private struct SessionAttendanceTable: View {
+    @Environment(AppStore.self) private var store
+    var session: TestSession
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                TableHeader("座位号", width: 80)
+                TableHeader("学员", width: 180)
+                TableHeader("学员签到", width: 120)
+                TableHeader("家长签到", width: 120)
+                TableHeader("状态", width: 120)
+                TableHeader("操作", width: 120)
+                Spacer()
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+
+            ForEach(session.seats) { seat in
+                let student = store.studentByID(seat.studentID)
+                HStack {
+                    Text("\(seat.seatNo)")
+                        .frame(width: 80, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(student?.name ?? store.studentName(seat.studentID))
+                            .font(.system(size: 15, weight: .bold))
+                        Text(student?.phone ?? "")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(JWColor.textMuted)
+                    }
+                    .frame(width: 180, alignment: .leading)
+                    CheckButton(isOn: seat.studentCheckedIn) { store.toggleStudentCheckIn(sessionID: session.id, seatID: seat.id) }
+                        .frame(width: 120)
+                    CheckButton(isOn: seat.parentCheckedIn) { store.toggleParentCheckIn(sessionID: session.id, seatID: seat.id) }
+                        .frame(width: 120)
+                    StatusBadge(title: seat.studentCheckedIn && seat.parentCheckedIn ? "齐" : "待补", tint: seat.studentCheckedIn && seat.parentCheckedIn ? JWColor.success : JWColor.warning)
+                        .frame(width: 120, alignment: .leading)
+                    InlineActionButton(title: "打电话", systemImage: "phone.fill") {
+                        store.toast = "拨号占位：\(student?.phone ?? "--")"
+                    }
+                    .frame(width: 120, alignment: .leading)
+                    Spacer()
+                }
+                .font(.system(size: 14, weight: .medium))
+                .padding(.vertical, 14)
+                .padding(.horizontal, 12)
+                .background(JWColor.surface)
+                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+            }
+        }
+    }
+}
+
+private struct SessionMarkingTable: View {
+    @Environment(AppStore.self) private var store
+    var session: TestSession
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                TableHeader("座位号", width: 80)
+                TableHeader("学员", width: 180)
+                TableHeader("测试科目")
+                TableHeader("结果", width: 90)
+                TableHeader("操作", width: 180)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+
+            ForEach(session.seats) { seat in
+                let student = store.studentByID(seat.studentID)
+                HStack {
+                    Text("\(seat.seatNo)")
+                        .frame(width: 80, alignment: .leading)
+                    Text(student?.name ?? store.studentName(seat.studentID))
+                        .font(.system(size: 15, weight: .bold))
+                        .frame(width: 180, alignment: .leading)
+                    Text(seat.subjects.map(\.title).joined(separator: " / "))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(seat.result.map(String.init) ?? "待录入")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(JWColor.primary)
+                        .frame(width: 90, alignment: .leading)
+                    HStack(spacing: 10) {
+                        InlineActionButton(title: "去批改", systemImage: "pencil") {
+                            store.navigate(.assessment)
+                        }
+                        InlineActionButton(title: "换科目", systemImage: "arrow.triangle.2.circlepath") {
+                            store.toast = "换科目入口占位"
+                        }
+                    }
+                    .frame(width: 180, alignment: .leading)
+                }
+                .font(.system(size: 14, weight: .medium))
+                .padding(.vertical, 14)
                 .padding(.horizontal, 12)
                 .background(JWColor.surface)
                 .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
@@ -1572,37 +1714,85 @@ private struct OrdersView: View {
     @State private var showRefund = false
 
     var rows: [Order] {
-        store.orders.filter { $0.status == tab && (search.isEmpty || $0.courseTitle.localizedStandardContains(search) || store.studentName($0.studentID).localizedStandardContains(search)) }
+        store.orders.filter {
+            $0.status == tab &&
+            (search.isEmpty || $0.courseTitle.localizedStandardContains(search) || store.studentName($0.studentID).localizedStandardContains(search)) &&
+            flowState(for: $0) == store.orderState.refundState
+        }
+    }
+
+    private var currentFlowLabel: String {
+        store.orderState.refundState.rawValue
+    }
+
+    private var totalAmount: Int {
+        rows.reduce(0) { $0 + $1.amount }
+    }
+
+    private func flowState(for order: Order) -> RefundFlowState {
+        switch order.status {
+        case .pending: return .draft
+        case .paid: return .confirmed
+        case .refunded: return .submitted
+        case .recycled: return .validating
+        }
     }
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 0) {
-                VStack(spacing: 12) {
-                    SearchField(placeholder: "搜索班级或学员", text: $search)
-                    HStack {
-                        ForEach(OrderStatus.allCases) { status in
-                            FilterChip(title: status.rawValue, isSelected: tab == status) { tab = status }
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 14) {
+                    MetricCard(title: "当前筛选订单", value: "\(rows.count)", tint: JWColor.primary, systemImage: "list.bullet.rectangle")
+                    MetricCard(title: "筛选订单金额", value: "¥\(totalAmount)", tint: JWColor.success, systemImage: "yensign.circle")
+                    MetricCard(title: "退款流程", value: currentFlowLabel, tint: JWColor.warning, systemImage: "arrow.triangle.branch")
+                }
+
+                VStack(spacing: 0) {
+                    VStack(spacing: 12) {
+                        SearchField(placeholder: "搜索班级或学员", text: $search)
+                        HStack {
+                            ForEach(OrderStatus.allCases) { status in
+                                FilterChip(title: status.rawValue, isSelected: tab == status) { tab = status }
+                            }
+                            Spacer()
                         }
-                        Spacer()
+                        HStack(spacing: 8) {
+                            ForEach(RefundFlowState.allCases) { state in
+                                Button(action: { store.orderState.refundState = state }) {
+                                    Text(state.rawValue)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(store.orderState.refundState == state ? JWColor.primary : JWColor.textMuted)
+                                        .padding(.horizontal, 12)
+                                        .frame(height: 32)
+                                        .background(store.orderState.refundState == state ? JWColor.primaryLight : JWColor.surface)
+                                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                                .stroke(store.orderState.refundState == state ? JWColor.primary : JWColor.divider, lineWidth: 1)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .padding(16)
+                    .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+
+                    OrderTable(rows: rows) { order in
+                        store.selectedOrderID = order.id
+                        showRefund = true
                     }
                 }
-                .padding(16)
-                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
-
-                OrderTable(rows: rows) { order in
-                    store.selectedOrderID = order.id
-                    showRefund = true
-                }
+                .background(JWColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(JWColor.divider))
             }
-            .background(JWColor.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
             .frame(maxWidth: .infinity)
             .layoutPriority(1)
 
-            RefundSummaryPanel()
-                .frame(width: 260)
+            RefundSummaryPanel(flowState: store.orderState.refundState)
+                .frame(width: 280)
         }
         .overlay {
             if showRefund, let order = store.selectedOrder {
@@ -1616,14 +1806,25 @@ private struct OrderTable: View {
     var rows: [Order]
     var refund: (Order) -> Void
 
+    private func flowStateText(_ status: OrderStatus) -> String {
+        switch status {
+        case .pending: return RefundFlowState.draft.rawValue
+        case .paid: return RefundFlowState.confirmed.rawValue
+        case .refunded: return RefundFlowState.submitted.rawValue
+        case .recycled: return RefundFlowState.validating.rawValue
+        }
+    }
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             VStack(spacing: 0) {
                 HStack {
-                    DataTableHeader("订单", width: 280)
+                    DataTableHeader("订单", width: 260)
                     DataTableHeader("学员", width: 110)
-                    DataTableHeader("金额", width: 90)
+                    DataTableHeader("金额", width: 96)
                     DataTableHeader("收款", width: 150)
+                    DataTableHeader("退款流程", width: 120)
+                    DataTableHeader("操作", width: 120)
                     Spacer()
                 }
                 .padding(.horizontal, 16)
@@ -1631,15 +1832,15 @@ private struct OrderTable: View {
                 .background(JWColor.surfaceMuted)
 
                 if rows.isEmpty {
-                    EmptyStateView(title: "当前暂无订单", systemImage: "creditcard")
+                    EmptyStateView(title: "当前筛选下暂无订单", systemImage: "creditcard")
                         .frame(minHeight: 440)
                 } else {
                     ForEach(rows) { order in
-                        OrderRow(order: order) { refund(order) }
+                        OrderRow(order: order, flowText: flowStateText(order.status)) { refund(order) }
                     }
                 }
             }
-            .frame(minWidth: 760, minHeight: 500, alignment: .topLeading)
+            .frame(minWidth: 900, minHeight: 500, alignment: .topLeading)
         }
         .frame(minHeight: 500, alignment: .topLeading)
     }
@@ -1648,6 +1849,7 @@ private struct OrderTable: View {
 private struct OrderRow: View {
     @Environment(AppStore.self) private var store
     var order: Order
+    var flowText: String
     var refund: () -> Void
 
     var body: some View {
@@ -1663,7 +1865,7 @@ private struct OrderRow: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(JWColor.textMuted)
             }
-            .frame(width: 280, alignment: .leading)
+            .frame(width: 260, alignment: .leading)
             Text(store.studentName(order.studentID))
                 .font(.system(size: 15, weight: .semibold))
                 .frame(width: 110, alignment: .leading)
@@ -1671,7 +1873,7 @@ private struct OrderRow: View {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(order.amount == 0 ? JWColor.danger : JWColor.text)
                 .monospacedDigit()
-                .frame(width: 90, alignment: .leading)
+                .frame(width: 96, alignment: .leading)
             VStack(alignment: .leading, spacing: 4) {
                 Text(order.receiver)
                     .font(.system(size: 14, weight: .bold))
@@ -1680,10 +1882,20 @@ private struct OrderRow: View {
                     .foregroundStyle(JWColor.textMuted)
             }
             .frame(width: 150, alignment: .leading)
-            Spacer()
-            if order.status == .paid {
-                SecondaryButton(title: "退款", systemImage: "arrow.uturn.backward", tint: JWColor.danger, action: refund)
+            StatusBadge(
+                title: flowText,
+                tint: flowText == RefundFlowState.submitted.rawValue ? JWColor.success : (flowText == RefundFlowState.confirmed.rawValue ? JWColor.warning : JWColor.textMuted)
+            )
+            .frame(width: 120, alignment: .leading)
+            HStack(spacing: 8) {
+                if order.status == .paid {
+                    SecondaryButton(title: "退款", systemImage: "arrow.uturn.backward", tint: JWColor.danger, action: refund)
+                } else {
+                    SecondaryButton(title: "详情", systemImage: "doc.text.magnifyingglass", tint: JWColor.primary) {}
+                }
             }
+            .frame(width: 120, alignment: .leading)
+            Spacer()
         }
         .padding(.horizontal, 16)
         .frame(height: 76)
@@ -1693,12 +1905,27 @@ private struct OrderRow: View {
 
 private struct RefundSummaryPanel: View {
     @Environment(AppStore.self) private var store
+    var flowState: RefundFlowState
+
+    private var matchingRefunds: [Refund] {
+        switch flowState {
+        case .submitted:
+            return store.refunds
+        case .confirmed:
+            return store.refunds.filter { $0.amount > 0 }
+        case .validating:
+            return store.refunds.filter { $0.note.isEmpty }
+        case .draft:
+            return store.refunds.filter { !$0.note.isEmpty }
+        }
+    }
 
     var body: some View {
         AppCard {
             VStack(alignment: .leading, spacing: 16) {
                 SectionTitle(title: "退款概览", actionTitle: nil)
                 VStack(spacing: 10) {
+                    MetricLine(label: "当前流程", value: flowState.rawValue)
                     MetricLine(label: "可退款订单", value: "\(store.paidOrders.count)")
                     MetricLine(label: "已退款", value: "\(store.refunds.count)")
                     MetricLine(label: "退款金额", value: "¥ \(store.refunds.reduce(0) { $0 + $1.amount })")
@@ -1706,12 +1933,12 @@ private struct RefundSummaryPanel: View {
                 Divider()
                 Text("最近退款")
                     .font(.system(size: 15, weight: .bold))
-                if store.refunds.isEmpty {
-                    Text("暂无退款记录")
+                if matchingRefunds.isEmpty {
+                    Text("当前流程下暂无退款记录")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(JWColor.textMuted)
                 } else {
-                    ForEach(store.refunds.prefix(4)) { refund in
+                    ForEach(matchingRefunds.prefix(4)) { refund in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(refund.reason)
                                 .font(.system(size: 14, weight: .bold))
