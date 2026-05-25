@@ -36,6 +36,7 @@ final class AppStore {
     var selectedOrderID: UUID?
     var toast: String?
     var feedback: UIFeedback?
+    var callDrawer: CallDrawerContext?
     var shouldPresentCampusDialog = false
     var pendingCampusSelectionID: UUID?
     var navigationState = NavigationState()
@@ -273,45 +274,85 @@ final class AppStore {
         feedback = UIFeedback(message: message, level: level)
     }
 
+    func openCallDrawer(
+        role: CallTargetRole,
+        name: String,
+        phone: String,
+        studentNumber: String? = nil,
+        grade: String? = nil,
+        creditScore: Int? = nil
+    ) {
+        callDrawer = CallDrawerContext(
+            role: role,
+            name: name,
+            phone: phone,
+            studentNumber: studentNumber,
+            grade: grade,
+            creditScore: creditScore,
+            note: "已联系对象，沟通今日到课与课堂表现。家长对课程进度表示认可，后续继续跟进学习反馈。"
+        )
+    }
+
+    func closeCallDrawer() {
+        callDrawer = nil
+    }
+
     private func loadMockData() {
         // 固定校区 ID，便于 UserDefaults 记住上次选择。
-        let campusSeeds: [(String, String)] = [
-            ("Bada", "八达"),
-            ("Bafang", "八方"),
-            ("BazhongHexi", "八中河西"),
-            ("Chongwen", "崇文"),
-            ("Dongtang", "东塘"),
-            ("Furong", "芙蓉"),
-            ("Guansha", "观沙"),
-            ("Hexi", "河西"),
-            ("Heping", "和平"),
-            ("Jiufeng", "九峰"),
-            ("Jinpenling", "金盆岭"),
-            ("Jinqiao", "金桥"),
-            ("Kele", "可乐"),
-            ("Mawangdui", "马王堆"),
-            ("Muli", "木里"),
-            ("RengongZhinen", "人工智能"),
-            ("Shazitang", "砂子塘"),
-            ("Shenxianling", "神仙岭"),
-            ("Sifangping", "四方坪"),
-            ("Tianxin", "天心"),
-            ("Tianlu", "天麓"),
-            ("Wangyuehu", "望月湖"),
-            ("Wenyi", "文艺"),
-            ("Xiangshu", "湘树"),
-            ("Yanghu", "洋湖"),
-            ("Yuhua", "雨花"),
-            ("Yuelu", "岳麓"),
-            ("Zhongnan", "中南"),
+        let campusSeeds: [(code: String, name: String, region: String)] = [
+            ("BaoheNanxunmenqiao", "南薰门桥", "包河区"),
+            ("BaoheTaihulu", "太湖路", "包河区"),
+            ("BinhuBalidushi", "巴黎都市", "滨湖区"),
+            ("BinhuDongtinghulu", "洞庭湖路", "滨湖区"),
+            ("BinhuWeilaihui", "未来荟", "滨湖区"),
+            ("BinhuYizhong", "滨湖一中", "滨湖区"),
+            ("LuyangBaishuiba", "白水坝", "庐阳区"),
+            ("LuyangHaitang", "海棠", "庐阳区"),
+            ("LuyangHuanchenglu", "环城路", "庐阳区"),
+            ("LuyangSanxiaokou", "三孝口", "庐阳区"),
+            ("LuyangSenlincheng", "森林城", "庐阳区"),
+            ("LuyangShouchunlu", "寿春路", "庐阳区"),
+            ("LuyangSilihe", "四里河", "庐阳区"),
+            ("LuyangSipailou", "四牌楼", "庐阳区"),
+            ("LuyangTianwangxiang", "天王巷", "庐阳区"),
+            ("LuyangTongchenglu", "桐城路", "庐阳区"),
+            ("LuyangXiangshuwan", "橡树湾", "庐阳区"),
+            ("LuyangYijinglu", "义井路", "庐阳区"),
+            ("LuyangYuanfang", "远方校区", "庐阳区"),
+            ("ShushanAnnongda", "安农大", "蜀山区"),
+            ("ShushanDaxidi", "大溪地", "蜀山区"),
+            ("ShushanFanhuadadao", "繁华大道", "蜀山区"),
+            ("ShushanHaiguanlu", "海关路", "蜀山区"),
+            ("ShushanHonggang", "洪岗", "蜀山区"),
+            ("ShushanHuangshanlu", "黄山路", "蜀山区"),
+            ("ShushanJiulonglu", "九龙路", "蜀山区"),
+            ("ShushanMeiguiyuan", "玫瑰园", "蜀山区"),
+            ("ShushanQianshanlu", "潜山路", "蜀山区"),
+            ("ShushanWanhelu", "皖河路", "蜀山区"),
+            ("ShushanWulidun", "五里墩", "蜀山区"),
+            ("YaohaiQuanjiaolu", "全椒路", "瑶海区"),
+            ("YaohaiTonglinglu", "铜陵路", "瑶海区"),
+            ("ZhengwuTianehu", "天鹅湖", "政务文化新区"),
+            ("ZhengwuXiuninglu", "休宁路", "政务文化新区"),
+            ("OtherBazhongKuanghe", "八中匡河", "其他"),
+            ("OtherBazhongYunhe", "八中运河新城", "其他"),
+            ("OtherHefeiQizhong", "合肥七中", "其他"),
+            ("OtherWankeJinyu", "万科金域国际", "其他"),
+            ("OtherShufaDasha", "中国书法大厦", "其他"),
         ]
-        let orderedSeeds = campusSeeds.sorted { $0.0.localizedCaseInsensitiveCompare($1.0) == .orderedAscending }
+        let orderedSeeds = campusSeeds.sorted { lhs, rhs in
+            if lhs.region == rhs.region {
+                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+            return lhs.region.localizedCaseInsensitiveCompare(rhs.region) == .orderedAscending
+        }
         campuses = orderedSeeds.enumerated().map { index, seed in
             let id = UUID(uuidString: String(format: "550E8400-E29B-41D4-A716-44665544%04d", index + 1)) ?? UUID()
             return Campus(
                 id: id,
-                name: seed.0,
-                rooms: [seed.1, "A01", "A02", "B01", "B02"].map { Classroom(name: $0) }
+                region: seed.region,
+                name: seed.name,
+                rooms: ["A01", "A02", "B01", "B02"].map { Classroom(name: $0) }
             )
         }
         currentCampus = campuses.first

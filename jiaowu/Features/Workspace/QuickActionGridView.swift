@@ -33,7 +33,6 @@ struct QuickActionGridView: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .stroke(Color.white.opacity(0.65), lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
                 }
                 .buttonStyle(.plain)
             }

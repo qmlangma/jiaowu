@@ -14,8 +14,8 @@ enum WorkspaceMockData {
 
     static let quickActions: [WorkspaceQuickAction] = [
         WorkspaceQuickAction(kind: .assessment, title: "预约入学测", symbol: "doc.text.magnifyingglass", illustrationSymbol: "pencil.and.ruler.fill"),
-        WorkspaceQuickAction(kind: .enrollCourse, title: "新生报名", symbol: "graduationcap.fill", illustrationSymbol: "books.vertical.fill"),
-        WorkspaceQuickAction(kind: .activityQRCode, title: "活动二维码", symbol: "qrcode", illustrationSymbol: "qrcode.viewfinder")
+        WorkspaceQuickAction(kind: .enrollCourse, title: "选课报名", symbol: "graduationcap.fill", illustrationSymbol: "books.vertical.fill"),
+        WorkspaceQuickAction(kind: .activityQRCode, title: "活动报名", symbol: "qrcode", illustrationSymbol: "qrcode.viewfinder")
     ]
 
     static let studentResults: [WorkspaceStudentResult] = [

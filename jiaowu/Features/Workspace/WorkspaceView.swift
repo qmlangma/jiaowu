@@ -3,7 +3,8 @@ import SwiftUI
 struct WorkspaceView: View {
     @Environment(AppStore.self) private var store
     @State private var searchText = ""
-    @State private var isSearchFocused = false
+    @State private var isSearchPagePresented = false
+    @State private var recentSearches = ["张明明", "A101", "二年级信息学算法晚班", "李梓轩", "陈老师", "138****5621", "Python 体验活动"]
     @State private var selectedPeriod: WorkspaceTimePeriod = .afternoon
     @State private var selectedDate = WorkspaceMockData.today
     @State private var selectedFloor: RoomFloor = .all
@@ -12,6 +13,8 @@ struct WorkspaceView: View {
     @State private var reservationDraft: RoomReservationDraft?
     @State private var selectedStudent: WorkspaceStudentResult?
     @State private var selectedSession: RoomSession?
+    @State private var selectedRosterSession: RoomSession?
+    @State private var selectedTeacherProfile: TeacherProfile?
     @State private var isAlertCollapsed = true
     @State private var alarmOn = false
     @State private var lightOn = false
@@ -35,49 +38,59 @@ struct WorkspaceView: View {
             ZStack(alignment: .topLeading) {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: AppSpacing.large) {
-                        WorkspaceHeaderView(
-                            campusName: store.currentCampus?.name ?? "请选择校区",
-                            summaries: WorkspaceMockData.summaries,
-                            searchText: $searchText,
-                            isSearchFocused: $isSearchFocused,
-                            studentResults: WorkspaceMockData.studentResults,
-                            classResults: WorkspaceMockData.classResults,
-                            teacherResults: WorkspaceMockData.teacherResults,
-                            selectStudent: { selectedStudent = $0 },
-                            selectClass: { selectedSession = $0.session },
-                            selectTeacher: { store.toast = "已打开\($0.name)今日班级" },
-                            openCampus: {
-                                store.pendingCampusSelectionID = store.currentCampus?.id
-                                store.shouldPresentCampusDialog = true
-                            },
-                            openAlerts: {
-                                withAnimation(.easeInOut(duration: 0.22)) {
-                                    isAlertCollapsed = false
-                                }
-                            },
-                            hasUnreadAlerts: !WorkspaceMockData.alerts.isEmpty,
-                            alarmOn: $alarmOn,
-                            lightOn: $lightOn,
-                            webOn: $webOn
-                        )
+                        if let selectedTeacherProfile {
+                            TeacherDetailPage(teacher: selectedTeacherProfile) {
+                                self.selectedTeacherProfile = nil
+                            }
+                        } else if isSearchPagePresented {
+                            WorkspaceSearchPage(
+                                query: $searchText,
+                                recentSearches: $recentSearches,
+                                cancel: { isSearchPagePresented = false },
+                                submit: handleWorkspaceSearch
+                            )
+                        } else {
+                            WorkspaceHeaderView(
+                                campusName: store.currentCampus?.name ?? "请选择校区",
+                                summaries: WorkspaceMockData.summaries,
+                                openCampus: {
+                                    store.pendingCampusSelectionID = store.currentCampus?.id
+                                    store.shouldPresentCampusDialog = true
+                                },
+                                openSearch: {
+                                    withAnimation(.easeInOut(duration: 0.22)) {
+                                        isSearchPagePresented = true
+                                    }
+                                },
+                                openAlerts: {
+                                    withAnimation(.easeInOut(duration: 0.22)) {
+                                        isAlertCollapsed = false
+                                    }
+                                },
+                                hasUnreadAlerts: !WorkspaceMockData.alerts.isEmpty,
+                                alarmOn: $alarmOn,
+                                lightOn: $lightOn,
+                                webOn: $webOn
+                            )
 
-                        QuickActionGridView(
-                            actions: WorkspaceMockData.quickActions,
-                            handleAction: handleQuickAction
-                        )
+                            QuickActionGridView(
+                                actions: WorkspaceMockData.quickActions,
+                                handleAction: handleQuickAction
+                            )
 
-                        RoomMonitorView(
-                            selectedPeriod: $selectedPeriod,
-                            selectedDate: $selectedDate,
-                            sessions: roomSessions,
-                            selectedFloor: $selectedFloor,
-                            hideIdleRooms: $hideIdleRooms,
-                            previousDate: { selectedDate = selectedDate.addingTimeInterval(-86_400) },
-                            nextDate: { selectedDate = selectedDate.addingTimeInterval(86_400) },
-                            viewClass: { selectedSession = $0 },
-                            viewRoster: { selectedSession = $0 },
-                            reserveRoom: { reservationDraft = RoomReservationDraft(room: $0.roomName, dateText: selectedDate.displayText, period: selectedPeriod.title) }
-                        )
+                            RoomMonitorView(
+                                selectedPeriod: $selectedPeriod,
+                                selectedDate: $selectedDate,
+                                sessions: roomSessions,
+                                selectedFloor: $selectedFloor,
+                                hideIdleRooms: $hideIdleRooms,
+                                previousDate: { selectedDate = selectedDate.addingTimeInterval(-86_400) },
+                                nextDate: { selectedDate = selectedDate.addingTimeInterval(86_400) },
+                                viewClass: { selectedRosterSession = $0 },
+                                viewRoster: { selectedRosterSession = $0 },
+                                reserveRoom: { reservationDraft = RoomReservationDraft(room: $0.roomName, dateText: selectedDate.displayText, period: selectedPeriod.title) }
+                            )
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .padding(.bottom, 20)
@@ -90,7 +103,10 @@ struct WorkspaceView: View {
                         AlertPanelView(
                             alerts: WorkspaceMockData.alerts,
                             collapse: { isAlertCollapsed = true },
-                            contactAction: { store.toast = "已呼叫\($0.contactName)" },
+                            contactAction: { alert in
+                                let role: CallTargetRole = alert.actionTitle.contains("老师") ? .teacher : (alert.actionTitle.contains("助教") ? .assistant : .student)
+                                store.openCallDrawer(role: role, name: alert.contactName, phone: alert.phone)
+                            },
                             markAction: { store.toast = "已标记\($0.contactName)完成联系" }
                         )
                         .frame(width: 344)
@@ -146,6 +162,16 @@ struct WorkspaceView: View {
                     )
                 }
 
+                if let selectedRosterSession {
+                    ClassRosterDrawerSheet(
+                        session: selectedRosterSession,
+                        openTeacherDetail: { teacher in
+                            self.selectedTeacherProfile = teacher
+                        },
+                        close: { self.selectedRosterSession = nil }
+                    )
+                }
+
             }
         }
     }
@@ -161,5 +187,11 @@ struct WorkspaceView: View {
         case .activityQRCode:
             store.toast = "已展示活动二维码，家长可扫码查看活动详情"
         }
+    }
+
+    private func handleWorkspaceSearch(_ keyword: String) {
+        let value = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        store.toast = "搜索：\(value)"
     }
 }

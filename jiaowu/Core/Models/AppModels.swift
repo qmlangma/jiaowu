@@ -7,7 +7,7 @@ enum AppRoute: String, CaseIterable, Identifiable {
     case courseSelection = "选课"
     case schedule = "课表"
     case orders = "订单"
-    case students = "优惠"
+    case students = "学员"
     case attendance = "审批"
 
     var id: String { rawValue }
@@ -16,22 +16,24 @@ enum AppRoute: String, CaseIterable, Identifiable {
         switch self {
         case .workspace: "house.fill"
         case .assessment: "doc.text.magnifyingglass"
-        case .courseSelection: "graduationcap.fill"
-        case .schedule: "building.2.fill"
-        case .orders: "creditcard.fill"
-        case .students: "tag.fill"
-        case .attendance: "checkmark.seal.fill"
+        case .courseSelection: "books.vertical.fill"
+        case .schedule: "calendar"
+        case .orders: "receipt.fill"
+        case .students: "person.2.fill"
+        case .attendance: "checkmark.circle.fill"
         }
     }
 }
 
 struct Campus: Identifiable, Hashable {
     let id: UUID
+    var region: String
     var name: String
     var rooms: [Classroom]
 
-    init(id: UUID = UUID(), name: String, rooms: [Classroom]) {
+    init(id: UUID = UUID(), region: String = "", name: String, rooms: [Classroom]) {
         self.id = id
+        self.region = region
         self.name = name
         self.rooms = rooms
     }
@@ -407,6 +409,39 @@ struct AttendanceState {
 
 struct OrderState {
     var refundState: RefundFlowState = .draft
+}
+
+enum CallTargetRole: String, CaseIterable, Identifiable {
+    case teacher = "老师"
+    case assistant = "助教"
+    case student = "学员"
+    var id: String { rawValue }
+}
+
+struct CallDrawerContext: Identifiable {
+    let id = UUID()
+    var role: CallTargetRole
+    var name: String
+    var phone: String
+    var studentNumber: String?
+    var grade: String?
+    var creditScore: Int?
+    var note: String
+}
+
+struct TeacherProfile: Identifiable, Hashable {
+    let id = UUID()
+    var name: String
+    var phone: String
+    var campus: String
+    var department: String
+    var onboardDate: String
+    var yearsOfTeaching: String
+    var graduateSchool: String
+    var subjects: String
+    var tags: [String]
+    var motto: String
+    var bio: String
 }
 
 struct TestAnswer: Identifiable, Hashable {

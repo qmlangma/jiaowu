@@ -18,20 +18,18 @@ struct ContentView: View {
 private struct AppShell: View {
     @Environment(AppStore.self) private var store
     @State private var isSidebarCollapsed = false
+    @State private var isScannerPresented = false
 
     var body: some View {
         ZStack(alignment: .top) {
             JWColor.appBackground.ignoresSafeArea()
 
             HStack(alignment: .top, spacing: 16) {
-                SidebarView(isCollapsed: $isSidebarCollapsed)
+                SidebarView(isCollapsed: $isSidebarCollapsed, openScanner: { isScannerPresented = true })
                 GeometryReader { geo in
-                    ScrollView {
-                        routeView
-                            .padding(.bottom, 20)
-                            .frame(minHeight: geo.size.height, alignment: .top)
-                    }
-                    .scrollIndicators(.hidden)
+                    routeView
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .frame(minHeight: geo.size.height, alignment: .top)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -49,12 +47,21 @@ private struct AppShell: View {
                     .padding(.top, 18)
                     .onTapGesture { store.toast = nil }
             }
+
+            if let context = store.callDrawer {
+                CallDrawerSheet(context: context)
+                    .zIndex(20)
+            }
         }
         .fullScreenCover(isPresented: Binding(
             get: { store.shouldPresentCampusDialog },
             set: { store.shouldPresentCampusDialog = $0 }
         )) {
             CampusPickerFullScreen()
+                .presentationBackground(.clear)
+        }
+        .fullScreenCover(isPresented: $isScannerPresented) {
+            ScanFullScreenView(close: { isScannerPresented = false })
                 .presentationBackground(.clear)
         }
         .onChange(of: store.toast) { _, newValue in
@@ -108,16 +115,16 @@ private struct CampusPickerFullScreen: View {
 
 private struct CampusPickDialog: View {
     @Environment(AppStore.self) private var store
-    @State private var selectedRegion = "蜀山区"
+    @State private var selectedRegion = "包河区"
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
-    private let regionOrder = ["蜀山区", "政务区", "瑶海区", "庐阳区"]
+    private let regionOrder = ["包河区", "滨湖区", "庐阳区", "蜀山区", "瑶海区", "政务文化新区", "其他"]
 
     private var campusesByRegion: [(region: String, campuses: [Campus])] {
-        let buckets = Dictionary(grouping: Array(store.campuses.enumerated())) { item in
-            regionOrder[item.offset % regionOrder.count]
+        let buckets = Dictionary(grouping: store.campuses) { campus in
+            campus.region
         }
         return regionOrder.map { region in
-            (region, buckets[region]?.map(\.element) ?? [])
+            (region, buckets[region] ?? [])
         }
     }
 
@@ -253,8 +260,9 @@ private struct CampusGridItem: View {
 private struct SidebarView: View {
     @Environment(AppStore.self) private var store
     @Binding var isCollapsed: Bool
+    var openScanner: () -> Void
     @State private var isLogoutConfirmPresented = false
-    private let primaryRoutes: [AppRoute] = [.workspace, .assessment, .courseSelection, .schedule, .orders, .students, .attendance]
+    private let primaryRoutes: [AppRoute] = [.workspace, .students, .assessment, .courseSelection, .schedule, .orders, .attendance]
 
     var body: some View {
         let edgeInset: CGFloat = 14
@@ -358,7 +366,7 @@ private struct SidebarView: View {
 
             VStack(spacing: 12) {
                 SidebarToolButton(systemImage: "qrcode.viewfinder", title: "扫一扫", isCollapsed: isCollapsed) {
-                    store.toast = "扫码页为前端占位"
+                    openScanner()
                 }
 
                 if isCollapsed {
@@ -427,6 +435,170 @@ private struct HeaderIconButton: View {
                 .frame(width: 26, height: 26)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct ScanFullScreenView: View {
+    var close: () -> Void
+    @State private var torchOn = false
+    @State private var scanLineProgress: CGFloat = 0.18
+
+    var body: some View {
+        ZStack {
+            backgroundLayer
+            Color.black.opacity(0.34).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                topBar
+                Spacer(minLength: 0)
+                scanBox
+                Spacer(minLength: 0)
+                bottomTools
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.55).repeatForever(autoreverses: true)) {
+                scanLineProgress = 0.82
+            }
+        }
+    }
+
+    private var backgroundLayer: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(red: 0.48, green: 0.45, blue: 0.41), Color(red: 0.33, green: 0.35, blue: 0.37)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 34) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white.opacity(0.08))
+                    .frame(width: 980, height: 180)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white.opacity(0.07))
+                    .frame(width: 860, height: 340)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: 1080, height: 260)
+            }
+            .blur(radius: 4)
+        }
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button(action: close) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 56)
+                    .background(Color.black.opacity(0.56))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 46)
+        .padding(.horizontal, 30)
+    }
+
+    private var scanBox: some View {
+        VStack(spacing: 22) {
+            Text("将二维码/条形码放入框内，即可自动扫描")
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(.white.opacity(0.92))
+
+            GeometryReader { geo in
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.white.opacity(0.68), lineWidth: 2)
+
+                    cornerGuide(.topLeading)
+                    cornerGuide(.topTrailing)
+                    cornerGuide(.bottomLeading)
+                    cornerGuide(.bottomTrailing)
+
+                    Rectangle()
+                        .fill(JWColor.primary.opacity(0.95))
+                        .frame(height: 3)
+                        .padding(.horizontal, 24)
+                        .offset(y: geo.size.height * scanLineProgress)
+                        .shadow(color: JWColor.primary.opacity(0.55), radius: 10, x: 0, y: 2)
+                }
+            }
+            .frame(width: 620, height: 620)
+        }
+    }
+
+    private var bottomTools: some View {
+        HStack {
+            Spacer(minLength: 0)
+            toolButton(symbol: "flashlight.on.fill", title: torchOn ? "已开启照亮" : "轻触照亮") {
+                torchOn.toggle()
+            }
+            Spacer(minLength: 160)
+            toolButton(symbol: "photo.on.rectangle", title: "相册选择") {
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.bottom, 72)
+    }
+
+    private func toolButton(symbol: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 14) {
+                Image(systemName: symbol)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 82, height: 82)
+                    .background(Color.black.opacity(0.56))
+                    .clipShape(Circle())
+                Text(title)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.95))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func cornerGuide(_ corner: Alignment) -> some View {
+        ZStack {
+            RoundedCorner(corner: corner)
+                .stroke(.white, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                .frame(width: 56, height: 56)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: corner)
+        .padding(18)
+    }
+}
+
+private struct RoundedCorner: Shape {
+    let corner: Alignment
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let r = min(rect.width, rect.height) * 0.82
+        switch corner {
+        case .topLeading:
+            path.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
+        case .topTrailing:
+            path.move(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + r))
+        case .bottomLeading:
+            path.move(to: CGPoint(x: rect.minX + r, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
+        default:
+            path.move(to: CGPoint(x: rect.maxX - r, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
+        }
+        return path
     }
 }
 
@@ -921,8 +1093,15 @@ private struct ScheduleTable: View {
                             .foregroundStyle(JWColor.textMuted)
                         HStack(spacing: 8) {
                             InlineActionButton(title: "打电话", systemImage: "phone.fill") {
-                                let phone = store.studentByID(seat.studentID)?.phone ?? "--"
-                                store.toast = "拨号占位：\(phone)"
+                                guard let student = store.studentByID(seat.studentID) else { return }
+                                store.openCallDrawer(
+                                    role: .student,
+                                    name: student.name,
+                                    phone: student.phone,
+                                    studentNumber: student.number,
+                                    grade: student.grade,
+                                    creditScore: student.creditScore
+                                )
                             }
                             InlineActionButton(title: "扫码登录", systemImage: "qrcode.viewfinder") {
                                 store.toast = "扫码登录占位"
@@ -1026,7 +1205,15 @@ private struct SessionAttendanceTable: View {
                     StatusBadge(title: seat.studentCheckedIn && seat.parentCheckedIn ? "齐" : "待补", tint: seat.studentCheckedIn && seat.parentCheckedIn ? JWColor.success : JWColor.warning)
                         .frame(width: 120, alignment: .leading)
                     InlineActionButton(title: "打电话", systemImage: "phone.fill") {
-                        store.toast = "拨号占位：\(student?.phone ?? "--")"
+                        guard let student else { return }
+                        store.openCallDrawer(
+                            role: .student,
+                            name: student.name,
+                            phone: student.phone,
+                            studentNumber: student.number,
+                            grade: student.grade,
+                            creditScore: student.creditScore
+                        )
                     }
                     .frame(width: 120, alignment: .leading)
                     Spacer()
@@ -1241,7 +1428,15 @@ private struct AttendanceTable: View {
                             .frame(width: 100, alignment: .leading)
                         Spacer()
                         SecondaryButton(title: "联系", systemImage: "phone", tint: JWColor.primary) {
-                            store.toast = "已复制家长联系方式"
+                            guard let student = store.studentByID(record.studentID) else { return }
+                            store.openCallDrawer(
+                                role: .student,
+                                name: student.name,
+                                phone: student.phone,
+                                studentNumber: student.number,
+                                grade: student.grade,
+                                creditScore: student.creditScore
+                            )
                         }
                     }
                     .padding(.horizontal, 16)

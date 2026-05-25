@@ -3,20 +3,14 @@ import SwiftUI
 struct WorkspaceHeaderView: View {
     var campusName: String
     var summaries: [WorkspaceSummary]
-    @Binding var searchText: String
-    @Binding var isSearchFocused: Bool
-    var studentResults: [WorkspaceStudentResult]
-    var classResults: [WorkspaceClassResult]
-    var teacherResults: [WorkspaceTeacherResult]
-    var selectStudent: (WorkspaceStudentResult) -> Void
-    var selectClass: (WorkspaceClassResult) -> Void
-    var selectTeacher: (WorkspaceTeacherResult) -> Void
     var openCampus: () -> Void
+    var openSearch: () -> Void
     var openAlerts: () -> Void
     var hasUnreadAlerts: Bool
     @Binding var alarmOn: Bool
     @Binding var lightOn: Bool
     @Binding var webOn: Bool
+    @State private var showAlarmConfirm = false
 
     private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.small), count: 5)
 
@@ -43,24 +37,15 @@ struct WorkspaceHeaderView: View {
                         .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
-                    HeaderToggleIcon(kind: .alarm, isOn: $alarmOn)
-                    HeaderToggleIcon(kind: .light, isOn: $lightOn)
-                    HeaderToggleIcon(kind: .network, isOn: $webOn)
+                    HeaderToggleIcon(kind: .alarm, isOn: $alarmOn) {
+                        showAlarmConfirm = true
+                    }
                 }
 
                 Spacer(minLength: 0)
 
-                WorkspaceSearchBar(
-                    text: $searchText,
-                    isFocused: $isSearchFocused,
-                    studentResults: studentResults,
-                    classResults: classResults,
-                    teacherResults: teacherResults,
-                    selectStudent: selectStudent,
-                    selectClass: selectClass,
-                    selectTeacher: selectTeacher
-                )
-                .frame(width: 520)
+                WorkspaceSearchBar(action: openSearch)
+                    .frame(width: 520)
                 Button(action: openAlerts) {
                     Image(systemName: "bell.fill")
                         .font(.system(size: 18, weight: .bold))
@@ -94,6 +79,16 @@ struct WorkspaceHeaderView: View {
         .background(JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .shadow(color: Color.black.opacity(0.05), radius: 22, x: 0, y: 10)
+        .alert("确认开启警报", isPresented: $showAlarmConfirm) {
+            Button("取消", role: .cancel) {}
+            Button("确认开启", role: .destructive) {
+                alarmOn = true
+                lightOn = true
+                webOn = true
+            }
+        } message: {
+            Text("是否确认开启警报？开启后\(campusName)内所有教室的警报灯都会亮起、授课大屏会自动切换为素养版。")
+        }
     }
 }
 
@@ -106,11 +101,10 @@ private struct HeaderToggleIcon: View {
 
     var kind: Kind
     @Binding var isOn: Bool
+    var action: () -> Void
 
     var body: some View {
-        Button {
-            isOn.toggle()
-        } label: {
+        Button(action: action) {
             Group {
                 if kind == .alarm {
                     Image(systemName: iconName)

@@ -19,7 +19,7 @@ struct RoomMonitorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
             HStack(alignment: .center, spacing: AppSpacing.medium) {
-                Text("课表教室")
+                Text("今日课程")
                     .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(JWColor.text)
                 floorPicker
@@ -41,7 +41,7 @@ struct RoomMonitorView: View {
             }
         }
         .padding(20)
-        .background(JWColor.surface.opacity(0.70))
+        .background(JWColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 

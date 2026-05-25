@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ClassSessionDetailSheet: View {
+    @Environment(AppStore.self) private var store
     var session: RoomSession
     var close: () -> Void
     var openSchedule: () -> Void
@@ -17,8 +18,14 @@ struct ClassSessionDetailSheet: View {
                     }
                 }
 
-                detailRow(title: "老师", value: session.teacher ?? "待安排", symbol: "person.fill")
-                detailRow(title: "助教", value: session.assistant ?? "无助教", symbol: "person.2.fill")
+                detailRow(title: "老师", value: session.teacher ?? "待安排", symbol: "person.fill", callAction: {
+                    guard let name = session.teacher else { return }
+                    store.openCallDrawer(role: .teacher, name: name, phone: session.teacherPhone ?? "--")
+                })
+                detailRow(title: "助教", value: session.assistant ?? "无助教", symbol: "person.2.fill", callAction: {
+                    guard let name = session.assistant else { return }
+                    store.openCallDrawer(role: .assistant, name: name, phone: session.assistantPhone ?? "--")
+                })
                 detailRow(title: "迟到/未到", value: "\(session.late) 迟到 · \(session.absent) 未到", symbol: "exclamationmark.circle.fill")
 
                 HStack(spacing: 12) {
@@ -30,7 +37,7 @@ struct ClassSessionDetailSheet: View {
         }
     }
 
-    private func detailRow(title: String, value: String, symbol: String) -> some View {
+    private func detailRow(title: String, value: String, symbol: String, callAction: (() -> Void)? = nil) -> some View {
         HStack(spacing: 14) {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .semibold))
@@ -47,6 +54,10 @@ struct ClassSessionDetailSheet: View {
                     .foregroundStyle(JWColor.text)
             }
             Spacer()
+            if let callAction {
+                SecondaryButton(title: "拨打电话", systemImage: "phone.fill", action: callAction)
+                    .frame(width: 120)
+            }
         }
         .padding(14)
         .background(JWColor.appBackground)
