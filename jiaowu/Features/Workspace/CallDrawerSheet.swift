@@ -26,6 +26,14 @@ struct CallDrawerSheet: View {
 
     var context: CallDrawerContext
 
+    private var campusLandlineOptions: [String] {
+        let campusName = store.currentCampus?.name ?? ""
+        if campusName.contains("合肥") {
+            return ["0551-88886666", "0551-88886667", "0551-88886668"]
+        }
+        return ["0551-88886666", "0551-88886667"]
+    }
+
     private var noteBinding: Binding<String> {
         Binding(
             get: { store.callDrawer?.note ?? context.note },
@@ -142,6 +150,9 @@ struct CallDrawerSheet: View {
             recordingSeconds += 1
         }
         .onAppear {
+            if landlineNumber.isEmpty, let first = campusLandlineOptions.first {
+                landlineNumber = first
+            }
             syncSelectedContactIfNeeded()
             withAnimation(.easeOut(duration: drawerAnimationDuration)) {
                 isDrawerVisible = true
@@ -302,13 +313,25 @@ struct CallDrawerSheet: View {
     private var landlineDialContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("1、请输入座机号")
+                Text("1、选择座机号")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(JWColor.text)
-                TextField("例如：0551-88886666", text: $landlineNumber)
-                    .font(.system(size: 15, weight: .semibold))
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
+                Menu {
+                    ForEach(campusLandlineOptions, id: \.self) { option in
+                        Button(option) {
+                            landlineNumber = option
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(trimmedLandlineNumber.isEmpty ? "请选择座机号" : trimmedLandlineNumber)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(trimmedLandlineNumber.isEmpty ? JWColor.textMuted : JWColor.text)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(JWColor.textMuted)
+                    }
                     .padding(.horizontal, 12)
                     .frame(height: 42)
                     .background(JWColor.surface)
@@ -317,6 +340,7 @@ struct CallDrawerSheet: View {
                             .stroke(JWColor.divider, lineWidth: 1)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {

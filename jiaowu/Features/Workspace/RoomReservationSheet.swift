@@ -5,7 +5,7 @@ struct RoomReservationSheet: View {
     var close: () -> Void
     var submit: (RoomReservationDraft) -> Void
 
-    private let purposes = ["临时接待", "入学测", "家长沟通", "内部会议", "其他"]
+    private let purposes = ["临时接待", "入学诊断", "家长沟通", "内部会议", "其他"]
 
     var body: some View {
         SideSheetShell(title: "预约教室", subtitle: "\(draft.room) · \(draft.dateText) · \(draft.period)", close: close) {

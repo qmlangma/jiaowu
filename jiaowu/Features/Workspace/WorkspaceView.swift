@@ -65,7 +65,14 @@ struct WorkspaceView: View {
                                 }
                             },
                             openSummary: handleSummaryTap,
-                            requestAlarmConfirm: { store.shouldPresentAlarmConfirm = true },
+                            requestAlarmConfirm: {
+                                if store.workspaceAlarmOn {
+                                    store.workspaceAlarmOn = false
+                                    store.toast = "已关闭一键保护"
+                                } else {
+                                    store.shouldPresentAlarmConfirm = true
+                                }
+                            },
                             hasUnreadAlerts: store.workspaceAlerts.contains(where: { !$0.isContacted }),
                             alarmOn: Binding(
                                 get: { store.workspaceAlarmOn },

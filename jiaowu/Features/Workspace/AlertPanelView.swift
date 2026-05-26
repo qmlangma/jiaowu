@@ -6,6 +6,7 @@ struct AlertPanelView: View {
     var collapse: () -> Void
     var contactAction: (WorkspaceAlert) -> Void
     var markAction: (WorkspaceAlert) -> Void
+    var quickSignAction: (WorkspaceAlert) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.medium) {
@@ -51,7 +52,8 @@ struct AlertPanelView: View {
                             AlertCardView(
                                 alert: alert,
                                 contactAction: { contactAction(alert) },
-                                markAction: { markAction(alert) }
+                                markAction: { markAction(alert) },
+                                quickSignAction: { quickSignAction(alert) }
                             )
                         }
                     }

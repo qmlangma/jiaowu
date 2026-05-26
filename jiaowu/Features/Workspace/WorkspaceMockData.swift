@@ -7,13 +7,11 @@ enum WorkspaceMockData {
     static let summaries: [WorkspaceSummary] = [
         WorkspaceSummary(title: "今日缺勤学员", value: "4", tint: JWColor.warning, symbol: "person.fill.xmark"),
         WorkspaceSummary(title: "今日缺勤老师", value: "1", tint: JWColor.danger, symbol: "exclamationmark.triangle.fill"),
-        WorkspaceSummary(title: "今日缺勤助教", value: "2", tint: JWColor.caution, symbol: "person.2.fill"),
-        WorkspaceSummary(title: "待处理审批", value: "6", tint: JWColor.primary, symbol: "checkmark.circle.fill"),
-        WorkspaceSummary(title: "待处理事项", value: "9", tint: JWColor.info, symbol: "tray.full.fill")
+        WorkspaceSummary(title: "今日缺勤助教", value: "2", tint: JWColor.caution, symbol: "person.2.fill")
     ]
 
     static let quickActions: [WorkspaceQuickAction] = [
-        WorkspaceQuickAction(kind: .assessment, title: "预约入学测", symbol: "doc.text.magnifyingglass", illustrationSymbol: "pencil.and.ruler.fill"),
+        WorkspaceQuickAction(kind: .assessment, title: "预约入学诊断", symbol: "doc.text.magnifyingglass", illustrationSymbol: "pencil.and.ruler.fill"),
         WorkspaceQuickAction(kind: .enrollCourse, title: "选课报名", symbol: "graduationcap.fill", illustrationSymbol: "books.vertical.fill"),
         WorkspaceQuickAction(kind: .activityQRCode, title: "活动报名", symbol: "qrcode", illustrationSymbol: "qrcode.viewfinder")
     ]
@@ -40,7 +38,7 @@ enum WorkspaceMockData {
 
     static let roomSessions: [RoomSession] = [
         RoomSession(floor: .first, roomName: "A101", status: .running, sessionType: .course, className: "二年级信息学算法晚班", time: "18:30-20:30", teacher: "张明明", teacherPhone: "13800138001", teacherSignedIn: true, assistant: "刘三副", assistantPhone: "13900139001", assistantSignedIn: true, arrived: 16, expected: 18, late: 1, absent: 1, capacity: 20, hasScreen: true, hasNetwork: true),
-        RoomSession(floor: .first, roomName: "A102", status: .running, sessionType: .assessment, className: "入学测现场诊断", time: "18:30-20:00", teacher: "陈明明", teacherPhone: "13800138002", teacherSignedIn: true, assistant: "王恩赐", assistantPhone: "13900139002", assistantSignedIn: true, arrived: 11, expected: 14, late: 2, absent: 1, capacity: 16, hasScreen: true, hasNetwork: true),
+        RoomSession(floor: .first, roomName: "A102", status: .running, sessionType: .assessment, className: "入学诊断现场测评", time: "18:30-20:00", teacher: "陈明明", teacherPhone: "13800138002", teacherSignedIn: true, assistant: "王恩赐", assistantPhone: "13900139002", assistantSignedIn: true, arrived: 11, expected: 14, late: 2, absent: 1, capacity: 16, hasScreen: true, hasNetwork: true),
         RoomSession(floor: .first, roomName: "A103", status: .upcoming, sessionType: .activity, className: "Python 体验活动", time: "20:10-21:00", teacher: "罗老师", teacherPhone: "13800138003", teacherSignedIn: false, assistant: "周助教", assistantPhone: "13900139003", assistantSignedIn: false, arrived: 0, expected: 8, late: 0, absent: 0, capacity: 12, hasScreen: true, hasNetwork: true),
         RoomSession(floor: .first, roomName: "A104", status: .notStarted, sessionType: .course, className: "一年级逻辑思维课", time: "19:30-21:00", teacher: "顾老师", teacherPhone: "13800138004", teacherSignedIn: false, assistant: "徐助教", assistantPhone: "13900139004", assistantSignedIn: false, arrived: 0, expected: 12, late: 0, absent: 0, capacity: 14, hasScreen: true, hasNetwork: true),
         RoomSession(floor: .first, roomName: "A105", status: .idle, sessionType: .none, className: nil, time: "19:00-21:00 可预约", teacher: nil, assistant: nil, arrived: 0, expected: 0, late: 0, absent: 0, capacity: 18, hasScreen: true, hasNetwork: true),
@@ -48,7 +46,7 @@ enum WorkspaceMockData {
         RoomSession(floor: .second, roomName: "B202", status: .idle, sessionType: .none, className: nil, time: "18:30-21:00 可预约", teacher: nil, assistant: nil, arrived: 0, expected: 0, late: 0, absent: 0, capacity: 14, hasScreen: false, hasNetwork: true),
         RoomSession(floor: .second, roomName: "B203", status: .ended, sessionType: .course, className: "一年级思维训练", time: "14:00-16:00", teacher: "刘老师", teacherPhone: "13800138006", teacherSignedIn: true, assistant: "唐助教", assistantPhone: "13900139006", assistantSignedIn: true, arrived: 12, expected: 12, late: 0, absent: 0, capacity: 18, hasScreen: true, hasNetwork: true),
         RoomSession(floor: .second, roomName: "B204", status: .running, sessionType: .course, className: "算法竞赛冲刺班", time: "18:40-20:40", teacher: "朱老师", teacherPhone: "13800138007", teacherSignedIn: true, assistant: "韩助教", assistantPhone: "13900139007", assistantSignedIn: false, arrived: 9, expected: 12, late: 1, absent: 2, capacity: 16, hasScreen: true, hasNetwork: true),
-        RoomSession(floor: .second, roomName: "B205", status: .upcoming, sessionType: .assessment, className: "入学测一对一", time: "20:00-20:40", teacher: "郑老师", teacherPhone: "13800138008", teacherSignedIn: false, assistant: "吴助教", assistantPhone: "13900139008", assistantSignedIn: false, arrived: 0, expected: 3, late: 0, absent: 0, capacity: 8, hasScreen: false, hasNetwork: true),
+        RoomSession(floor: .second, roomName: "B205", status: .upcoming, sessionType: .assessment, className: "入学诊断一对一", time: "20:00-20:40", teacher: "郑老师", teacherPhone: "13800138008", teacherSignedIn: false, assistant: "吴助教", assistantPhone: "13900139008", assistantSignedIn: false, arrived: 0, expected: 3, late: 0, absent: 0, capacity: 8, hasScreen: false, hasNetwork: true),
         RoomSession(floor: .second, roomName: "B206", status: .idle, sessionType: .none, className: nil, time: "晚间空档 2 小时", teacher: nil, assistant: nil, arrived: 0, expected: 0, late: 0, absent: 0, capacity: 20, hasScreen: true, hasNetwork: false),
         RoomSession(floor: .third, roomName: "C301", status: .notStarted, sessionType: .parentsMeeting, className: "家长会一对一沟通", time: "19:10-19:50", teacher: "许艳博", teacherPhone: "13800138009", teacherSignedIn: false, assistant: "李助教", assistantPhone: "13900139009", assistantSignedIn: false, arrived: 0, expected: 6, late: 0, absent: 0, capacity: 10, hasScreen: false, hasNetwork: true),
         RoomSession(floor: .third, roomName: "C302", status: .idle, sessionType: .none, className: nil, time: "全天 2 个空档", teacher: nil, assistant: nil, arrived: 0, expected: 0, late: 0, absent: 0, capacity: 22, hasScreen: true, hasNetwork: false),
@@ -198,7 +196,7 @@ enum RoomSessionType: String {
     case course = "课程"
     case activity = "活动"
     case parentsMeeting = "家长会"
-    case assessment = "入学测"
+    case assessment = "入学诊断"
 
     var tint: Color {
         switch self {

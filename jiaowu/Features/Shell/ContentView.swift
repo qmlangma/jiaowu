@@ -126,7 +126,8 @@ private struct AppShell: View {
                         let role: CallTargetRole = alert.actionTitle.contains("老师") ? .teacher : (alert.actionTitle.contains("助教") ? .assistant : .student)
                         store.openCallDrawer(role: role, name: alert.contactName, phone: alert.phone)
                     },
-                    markAction: markWorkspaceAlertAsContacted
+                    markAction: markWorkspaceAlertAsContacted,
+                    quickSignAction: quickSignWorkspaceAlert
                 )
                 .frame(width: 344)
                 .frame(maxHeight: .infinity, alignment: .top)
@@ -182,6 +183,12 @@ private struct AppShell: View {
         store.toast = "已标记\(updated.contactName)完成联系"
     }
 
+    private func quickSignWorkspaceAlert(_ alert: WorkspaceAlert) {
+        guard alert.category.contains("学生") else { return }
+        store.toast = "已为\(alert.contactName)执行快速签到"
+        markWorkspaceAlertAsContacted(alert)
+    }
+
     private func dismissWorkspaceAlertDrawer() {
         guard store.workspaceAlertDrawerVisible else {
             store.workspaceAlertDrawerPresented = false
@@ -221,7 +228,7 @@ private struct AlarmConfirmModal: View {
     var body: some View {
         ModalShell(title: "确认开启警报", close: cancel, showsBackdrop: false) {
             VStack(alignment: .leading, spacing: 18) {
-                Text("是否确认开启警报？开启后「\(campusName)」内所有教室的警报灯都会亮起、授课大屏会自动切换为素养版。")
+                Text("是否确认开启一键保护？开启后将通知「\(campusName)」内所有教室亮起警报灯。")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(JWColor.textMuted)
                     .lineSpacing(4)

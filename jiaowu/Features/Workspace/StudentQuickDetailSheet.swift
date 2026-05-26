@@ -15,7 +15,7 @@ struct StudentQuickDetailSheet: View {
 
                 HStack(spacing: 12) {
                     PrimaryButton(title: "报名课程", systemImage: "graduationcap.fill", action: enroll)
-                    SecondaryButton(title: "入学测报名", systemImage: "doc.text.magnifyingglass", action: assessment)
+                    SecondaryButton(title: "入学诊断报名", systemImage: "doc.text.magnifyingglass", action: assessment)
                 }
                 .frame(height: 52)
             }

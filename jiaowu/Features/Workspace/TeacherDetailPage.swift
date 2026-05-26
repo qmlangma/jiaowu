@@ -165,25 +165,18 @@ struct TeacherDetailPage: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 infoMetricCard(
-                    title: "入职日期",
-                    value: teacher.onboardDate,
-                    symbol: "calendar.badge.clock",
-                    gradient: [Color(red: 0.95, green: 0.98, blue: 1.00), Color(red: 0.90, green: 0.95, blue: 1.00)],
-                    accent: Color(red: 0.22, green: 0.50, blue: 0.95)
-                )
-                infoMetricCard(
-                    title: "教龄",
-                    value: teacher.yearsOfTeaching,
-                    symbol: "clock.badge.checkmark",
-                    gradient: [Color(red: 0.95, green: 1.00, blue: 0.96), Color(red: 0.89, green: 0.98, blue: 0.93)],
-                    accent: Color(red: 0.17, green: 0.66, blue: 0.49)
-                )
-                infoMetricCard(
                     title: "毕业院校",
                     value: teacher.graduateSchool,
                     symbol: "graduationcap.fill",
                     gradient: [Color(red: 0.99, green: 0.97, blue: 0.94), Color(red: 1.00, green: 0.93, blue: 0.88)],
                     accent: Color(red: 0.96, green: 0.55, blue: 0.20)
+                )
+                infoMetricCard(
+                    title: "主授方向",
+                    value: teacher.subjects,
+                    symbol: "books.vertical.fill",
+                    gradient: [Color(red: 0.95, green: 0.98, blue: 1.00), Color(red: 0.90, green: 0.95, blue: 1.00)],
+                    accent: Color(red: 0.22, green: 0.50, blue: 0.95)
                 )
             }
         }

@@ -4,9 +4,14 @@ struct AlertCardView: View {
     var alert: WorkspaceAlert
     var contactAction: () -> Void
     var markAction: () -> Void
+    var quickSignAction: () -> Void
     
     private var stateTint: Color {
         alert.isContacted ? JWColor.primary : alert.priority.tint
+    }
+
+    private var supportsQuickSign: Bool {
+        alert.category.contains("学生")
     }
 
     var body: some View {
@@ -46,6 +51,9 @@ struct AlertCardView: View {
 
             HStack(spacing: 8) {
                 WorkspaceTinyButton(title: alert.actionTitle, symbol: "phone.fill", tint: stateTint, action: contactAction)
+                if supportsQuickSign && !alert.isContacted {
+                    WorkspaceTinyButton(title: "快速签到", symbol: "checkmark.seal.fill", tint: JWColor.primary, action: quickSignAction)
+                }
                 if alert.isContacted {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.seal.fill")

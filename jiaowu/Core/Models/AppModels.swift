@@ -3,7 +3,7 @@ import SwiftUI
 
 enum AppRoute: String, CaseIterable, Identifiable {
     case workspace = "工作台"
-    case assessment = "入学测"
+    case assessment = "入学诊断"
     case courseSelection = "选课"
     case schedule = "课表"
     case orders = "订单"

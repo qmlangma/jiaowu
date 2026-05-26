@@ -60,8 +60,7 @@ struct RoomMonitorView: View {
                     HStack(alignment: .center, spacing: AppSpacing.medium) {
                         floorPicker
                         hideIdleToggle
-                        courseFilterTrigger(value: selectedSubjectFilter)
-                        courseFilterTrigger(value: selectedGradeFilter)
+                        courseFilterTrigger
                     }
                 }
 
@@ -172,7 +171,20 @@ struct RoomMonitorView: View {
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
     }
 
-    private func courseFilterTrigger(value: String) -> some View {
+    private var courseFilterSummary: String {
+        if selectedSubjectFilter == allSubject && selectedGradeFilter == allGrade {
+            return "科目/年级筛选"
+        }
+        if selectedGradeFilter == allGrade {
+            return selectedSubjectFilter
+        }
+        if selectedSubjectFilter == allSubject {
+            return selectedGradeFilter
+        }
+        return "\(selectedSubjectFilter) / \(selectedGradeFilter)"
+    }
+
+    private var courseFilterTrigger: some View {
         Button {
             draftSubjectFilter = selectedSubjectFilter
             draftGradeFilter = selectedGradeFilter
@@ -180,7 +192,7 @@ struct RoomMonitorView: View {
             isCourseFilterDrawerPresented = true
         } label: {
             HStack(spacing: 6) {
-                Text(value)
+                Text(courseFilterSummary)
                     .font(.system(size: 14, weight: .semibold))
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
