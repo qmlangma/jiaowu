@@ -187,7 +187,7 @@ struct WorkspaceView: View {
             name: result.name,
             phone: "13800138001",
             campus: store.currentCampus?.name ?? "合肥分校",
-            department: "教学部",
+            department: "小低教学部",
             onboardDate: "2021-08-16",
             yearsOfTeaching: "6年",
             graduateSchool: "华中师范大学",
