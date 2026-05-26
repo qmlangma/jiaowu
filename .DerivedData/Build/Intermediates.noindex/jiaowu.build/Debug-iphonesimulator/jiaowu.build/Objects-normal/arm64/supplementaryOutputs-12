@@ -1,0 +1,23 @@
+{
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Workspace/ToolboxSheet.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/ToolboxSheet.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/ToolboxSheet.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/ToolboxSheet.dia",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/ToolboxSheet.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/ToolboxSheet.swiftdeps"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Workspace/WorkspaceHeaderView.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceHeaderView.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceHeaderView.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceHeaderView.dia",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceHeaderView.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceHeaderView.swiftdeps"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Workspace/WorkspaceMockData.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceMockData.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceMockData.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceMockData.dia",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceMockData.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphonesimulator/jiaowu.build/Objects-normal/arm64/WorkspaceMockData.swiftdeps"
+  }
+}

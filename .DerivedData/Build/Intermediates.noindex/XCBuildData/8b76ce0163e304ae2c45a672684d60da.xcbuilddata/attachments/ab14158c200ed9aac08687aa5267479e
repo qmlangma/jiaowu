@@ -1,0 +1,99 @@
+{
+  "" : {
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowu-primary.dia",
+    "emit-module-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowu-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowu-primary-emit-module.dia",
+    "pch" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowu-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowu-primary.swiftdeps"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/App/jiaowuApp.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/jiaowuApp~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Core/Models/AppModels.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppModels~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Core/State/AppStore.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/AppStore~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Core/UI/DesignSystem.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/DesignSystem~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Auth/LoginView.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/LoginView~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Shell/ContentView.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Students/StudentsView.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/StudentsView~partial.swiftmodule"
+  },
+  "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Workspace/WorkspaceView.swift" : {
+    "const-values" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.swiftconstvalues",
+    "dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.d",
+    "diagnostics" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.dia",
+    "index-unit-output-path" : "/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.o",
+    "llvm-bc" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.bc",
+    "object" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.o",
+    "swift-dependencies" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView.swiftdeps",
+    "swiftmodule" : "/Users/xmx/Ai_Product/jiaowu/.DerivedData/Build/Intermediates.noindex/jiaowu.build/Debug-iphoneos/jiaowu.build/Objects-normal/arm64/WorkspaceView~partial.swiftmodule"
+  }
+}
