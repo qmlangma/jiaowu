@@ -1,0 +1,4 @@
+interface:
+  display_name: "FtPad-design"
+  short_description: "Reusable UI tokens, components, page patterns, and governance"
+  default_prompt: "Use $ftpad-design to create a reusable UI design specification for this project."

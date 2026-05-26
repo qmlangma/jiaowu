@@ -1,0 +1,88 @@
+{
+  "source": "/Users/xmx/Ai_Product/jiaowu/jiaowu/Features/Students/StudentsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "学员目录",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "姓名",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "电话",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "年级",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 243
+        }
+      },
+      {
+        "comment": "",
+        "key": "性别",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 246
+        }
+      },
+      {
+        "comment": "",
+        "key": "年级",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 273
+        }
+      },
+      {
+        "comment": "",
+        "key": "学科",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 274
+        }
+      },
+      {
+        "comment": "",
+        "key": "分数：%lld",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 275
+        }
+      },
+      {
+        "comment": "",
+        "key": "级别",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 276
+        }
+      }
+    ]
+  },
+  "version": 1
+}

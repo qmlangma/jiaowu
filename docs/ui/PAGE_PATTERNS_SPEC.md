@@ -11,8 +11,8 @@
   - 右：扫码登录主任务（高优先）
 - 登录成功流程：
   1. 进入首页
-  2. 立即弹窗选择工作校区（默认不选中）
-  3. 用户确认后进入可操作态
+  2. 可弹窗切换工作校区（单选，当前校区高亮）
+  3. 点击其他校区后立即切换并关闭弹窗（无需二次确认）
 
 ## 3. Dashboard / Workspace Pattern
 - 顶部：核心 KPI 3-4 张指标卡
@@ -52,4 +52,3 @@
 - 壳层与导航：`jiaowu/ContentView.swift` (`AppShell`, `SidebarView`, `TopBarView`)
 - 基础组件：`jiaowu/DesignSystem.swift`
 - 页面域：`WorkspaceView`, `StudentsView`, `CourseSelectionView`, `ScheduleView`, `AttendanceView`, `AssessmentView`, `OrdersView`
-
