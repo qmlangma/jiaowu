@@ -18,26 +18,21 @@ struct ContentView: View {
 private struct AppShell: View {
     @Environment(AppStore.self) private var store
     @State private var isSidebarCollapsed = false
+    @State private var isScannerPresented = false
+    @State private var onlyUncontactedStudentAlerts = false
+    @State private var selectedWorkspaceStudent: WorkspaceStudentResult?
 
     var body: some View {
         ZStack(alignment: .top) {
             JWColor.appBackground.ignoresSafeArea()
 
-            HStack(alignment: .top, spacing: 10) {
-                SidebarView(isCollapsed: $isSidebarCollapsed)
-                GeometryReader { geo in
-                    ScrollView {
-                        routeView
-                            .padding(.horizontal, 12)
-                            .padding(.bottom, 12)
-                            .frame(minHeight: geo.size.height, alignment: .top)
-                    }
-                    .scrollIndicators(.hidden)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            HStack(alignment: .top, spacing: 16) {
+                SidebarView(isCollapsed: $isSidebarCollapsed, openScanner: { isScannerPresented = true })
+                routeView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
 
             if let toast = store.toast {
                 Text(toast)
@@ -45,15 +40,54 @@ private struct AppShell: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18)
                     .frame(minHeight: 44)
-                    .background(JWColor.rail.opacity(0.96))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(JWColor.text)
+                    .clipShape(Capsule())
                     .padding(.top, 18)
                     .onTapGesture { store.toast = nil }
+                    .zIndex(100)
             }
 
-            if store.shouldPresentCampusDialog {
-                CampusPickDialog()
+            if let context = store.callDrawer {
+                CallDrawerSheet(context: context)
+                    .zIndex(20)
             }
+
+            if store.route == .workspace {
+                workspaceDrawerLayer
+                    .zIndex(16)
+            }
+
+            if store.shouldPresentAlarmConfirm {
+                Color.black.opacity(0.42)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        store.shouldPresentAlarmConfirm = false
+                    }
+                    .zIndex(40)
+
+                AlarmConfirmModal(
+                    campusName: store.currentCampus?.name ?? "当前校区",
+                    cancel: { store.shouldPresentAlarmConfirm = false },
+                    confirm: {
+                        store.workspaceAlarmOn = true
+                        store.shouldPresentAlarmConfirm = false
+                    }
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .padding(.horizontal, 24)
+                .zIndex(41)
+            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { store.shouldPresentCampusDialog },
+            set: { store.shouldPresentCampusDialog = $0 }
+        )) {
+            CampusPickerFullScreen()
+                .presentationBackground(.clear)
+        }
+        .fullScreenCover(isPresented: $isScannerPresented) {
+            ScanFullScreenView(close: { isScannerPresented = false })
+                .presentationBackground(.clear)
         }
         .onChange(of: store.toast) { _, newValue in
             guard newValue != nil else { return }
@@ -76,62 +110,359 @@ private struct AppShell: View {
         case .orders: OrdersView()
         }
     }
+
+    @ViewBuilder
+    private var workspaceDrawerLayer: some View {
+        if store.workspaceAlertDrawerPresented {
+            ZStack(alignment: .trailing) {
+                Color.black.opacity(store.workspaceAlertDrawerVisible ? 0.30 : 0)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        dismissWorkspaceAlertDrawer()
+                    }
+
+                AlertPanelView(
+                    title: store.workspaceAlertDrawerFilter.title,
+                    alerts: workspaceFilteredAlerts,
+                    showSurnameIndex: store.workspaceAlertDrawerFilter == .absentStudent,
+                    showOnlyUncontactedToggle: store.workspaceAlertDrawerFilter == .absentStudent,
+                    onlyUncontacted: onlyUncontactedStudentAlerts,
+                    collapse: dismissWorkspaceAlertDrawer,
+                    toggleOnlyUncontacted: { onlyUncontactedStudentAlerts.toggle() },
+                    openStudentDetailAction: { alert in
+                        store.toast = "打开学员详情：\(alert.contactName)"
+                    },
+                    contactAction: { alert in
+                        let role: CallTargetRole = alert.actionTitle.contains("老师") ? .teacher : (alert.actionTitle.contains("助教") ? .assistant : .student)
+                        store.openCallDrawer(
+                            role: role,
+                            name: alert.contactName,
+                            phone: alert.phone,
+                            studentNumber: alert.studentNumber,
+                            workspaceAlertID: alert.id,
+                            note: alert.contactNote ?? ""
+                        )
+                    },
+                    markAction: markWorkspaceAlertAsContacted,
+                    quickSignAction: quickSignWorkspaceAlert,
+                    rescheduleAction: rescheduleWorkspaceAlert,
+                    transferAction: transferWorkspaceAlert
+                )
+                .frame(width: 640)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .padding(.trailing, 20)
+                .padding(.vertical, 20)
+                .offset(x: store.workspaceAlertDrawerVisible ? 0 : 680)
+            }
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.24)) {
+                    store.workspaceAlertDrawerVisible = true
+                }
+            }
+        }
+
+        if let session = store.workspaceSelectedRosterSession {
+            ClassRosterDrawerSheet(
+                session: session,
+                classTimeSlot: classTimeSlot,
+                openTeacherDetail: { teacher in
+                    store.workspaceSelectedTeacherProfile = teacher
+                },
+                close: { store.workspaceSelectedRosterSession = nil }
+            )
+        }
+
+        if let teacher = store.workspaceSelectedTeacherProfile {
+            TeacherDetailPage(teacher: teacher) {
+                store.workspaceSelectedTeacherProfile = nil
+            }
+            .zIndex(17)
+        }
+
+        if let student = selectedWorkspaceStudent {
+            StudentQuickDetailSheet(
+                student: student,
+                close: { selectedWorkspaceStudent = nil },
+                enroll: {
+                    selectedWorkspaceStudent = nil
+                    store.navigate(.courseSelection)
+                },
+                assessment: {
+                    selectedWorkspaceStudent = nil
+                    store.navigate(.assessment)
+                }
+            )
+            .zIndex(18)
+        }
+    }
+
+    private var workspaceFilteredAlerts: [WorkspaceAlert] {
+        let visible = store.workspaceAlerts.filter { store.workspaceAlertDrawerFilter.includes($0) }
+        let source = (store.workspaceAlertDrawerFilter == .absentStudent && onlyUncontactedStudentAlerts) ? visible.filter { !$0.isContacted } : visible
+        let pending = source.filter { !$0.isContacted }
+        let contacted = source.filter(\.isContacted)
+        return pending + contacted
+    }
+
+    private var classTimeSlot: String {
+        let period = WorkspaceTimePeriod.autoByCurrentTime().title
+        return "\(Date().weekdayText)\(period)"
+    }
+
+    private func markWorkspaceAlertAsContacted(_ alert: WorkspaceAlert) {
+        guard let index = store.workspaceAlerts.firstIndex(where: { $0.id == alert.id }) else { return }
+        guard !store.workspaceAlerts[index].isContacted else { return }
+        var updated = store.workspaceAlerts[index]
+        updated.isContacted = true
+        store.workspaceAlerts.remove(at: index)
+        store.workspaceAlerts.append(updated)
+        store.toast = "已标记\(updated.contactName)完成联系"
+    }
+
+    private func quickSignWorkspaceAlert(_ alert: WorkspaceAlert) {
+        guard alert.category.contains("学生") else { return }
+        guard let index = store.workspaceAlerts.firstIndex(where: { $0.id == alert.id }) else { return }
+        store.workspaceAlerts[index].isSignedIn.toggle()
+        store.toast = store.workspaceAlerts[index].isSignedIn ? "签到成功" : "已取消签到"
+    }
+
+    private func rescheduleWorkspaceAlert(_ alert: WorkspaceAlert) {
+        guard alert.category.contains("学生") else { return }
+        store.toast = "打开调课流程"
+    }
+
+    private func transferWorkspaceAlert(_ alert: WorkspaceAlert) {
+        guard alert.category.contains("学生") else { return }
+        store.toast = "打开转班流程"
+    }
+
+    private func makeStudentResult(from alert: WorkspaceAlert) -> WorkspaceStudentResult {
+        WorkspaceStudentResult(
+            name: alert.contactName,
+            grade: inferredGrade(from: alert.className) ?? "年级未识别",
+            phone: alert.phone,
+            courseState: alert.timeDetail,
+            className: alert.className ?? "--"
+        )
+    }
+
+    private func inferredGrade(from className: String?) -> String? {
+        guard let className else { return nil }
+        return ["一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "小升初", "初一", "初二", "初三", "高一", "高二", "高三"].first { className.contains($0) }
+    }
+
+    private func dismissWorkspaceAlertDrawer() {
+        guard store.workspaceAlertDrawerVisible else {
+            store.workspaceAlerts.removeAll { $0.isSignedIn }
+            store.workspaceAlertDrawerPresented = false
+            return
+        }
+        withAnimation(.easeIn(duration: 0.24)) {
+            store.workspaceAlertDrawerVisible = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+            store.workspaceAlerts.removeAll { $0.isSignedIn }
+            store.workspaceAlertDrawerPresented = false
+        }
+    }
 }
 
-private struct CampusPickDialog: View {
+private extension Date {
+    var weekdayText: String {
+        let calendar = Calendar(identifier: .gregorian)
+        let weekday = calendar.component(.weekday, from: self)
+        switch weekday {
+        case 1: return "周日"
+        case 2: return "周一"
+        case 3: return "周二"
+        case 4: return "周三"
+        case 5: return "周四"
+        case 6: return "周五"
+        case 7: return "周六"
+        default: return "周一"
+        }
+    }
+}
+
+private struct AlarmConfirmModal: View {
+    var campusName: String
+    var cancel: () -> Void
+    var confirm: () -> Void
+
+    var body: some View {
+        ModalShell(title: "确认开启警报", close: cancel, showsBackdrop: false) {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("是否确认开启一键保护？开启后将通知「\(campusName)」内所有教室亮起警报灯。")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(JWColor.textMuted)
+                    .lineSpacing(4)
+                HStack(spacing: 12) {
+                    Button(action: cancel) {
+                        Text("取消")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundStyle(JWColor.primary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(JWColor.surface)
+                            .overlay(
+                                Capsule()
+                                    .stroke(JWColor.divider, lineWidth: 1)
+                            )
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    Button(action: confirm) {
+                        Text("确认开启")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(JWColor.danger)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .frame(maxWidth: 760)
+    }
+}
+
+private struct CampusPickerFullScreen: View {
     @Environment(AppStore.self) private var store
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.22)
                 .ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("请选择工作校区")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(JWColor.text)
-                    Spacer()
-                    Button {
-                        store.shouldPresentCampusDialog = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(JWColor.textMuted)
-                            .frame(width: 30, height: 30)
-                            .background(JWColor.surfaceMuted)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
+                .onTapGesture {
+                    store.shouldPresentCampusDialog = false
                 }
 
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                CampusPickDialog()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: UIScreen.main.bounds.height * 0.88)
+                    .clipShape(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    )
+            }
+            .ignoresSafeArea(edges: .bottom)
+        }
+        .background(Color.clear)
+    }
+}
+
+private struct CampusPickDialog: View {
+    @Environment(AppStore.self) private var store
+    @State private var selectedRegion = "包河区"
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 5)
+    private let regionOrder = ["包河区", "滨湖区", "庐阳区", "蜀山区", "瑶海区", "政务文化新区", "其他"]
+
+    private var campusesByRegion: [(region: String, campuses: [Campus])] {
+        let buckets = Dictionary(grouping: store.campuses) { campus in
+            campus.region
+        }
+        return regionOrder.map { region in
+            (region, buckets[region] ?? [])
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 26) {
+            Capsule()
+                .fill(JWColor.divider)
+                .frame(width: 48, height: 6)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 12)
+
+            HStack(spacing: 12) {
+                Label("切换校区", systemImage: "location.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(JWColor.text)
+                Spacer()
+                Button {
+                    store.shouldPresentCampusDialog = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(JWColor.textMuted)
+                        .frame(width: 32, height: 32)
+                        .background(JWColor.surfaceMuted)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.bottom, 4)
+
+            ScrollViewReader { proxy in
+                HStack(spacing: 12) {
+                    ForEach(regionOrder, id: \.self) { region in
+                        Button {
+                            selectedRegion = region
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                proxy.scrollTo(region, anchor: .top)
+                            }
+                        } label: {
+                            Text(region)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(selectedRegion == region ? JWColor.primary : JWColor.textMuted)
+                                .padding(.horizontal, 14)
+                                .frame(height: 34)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                        .fill(selectedRegion == region ? JWColor.primaryLight : JWColor.surfaceMuted)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                        .stroke(selectedRegion == region ? JWColor.primary.opacity(0.35) : JWColor.divider, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.bottom, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 ScrollView {
-                    LazyVGrid(columns: columns, spacing: 10) {
-                        ForEach(store.campuses) { campus in
-                            CampusGridItem(
-                                name: campus.name,
-                                isSelected: store.pendingCampusSelectionID == campus.id
-                            ) {
-                                store.pendingCampusSelectionID = campus.id
+                    VStack(alignment: .leading, spacing: 24) {
+                        ForEach(campusesByRegion, id: \.region) { section in
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(section.region)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(JWColor.text)
+                                    .id(section.region)
+
+                                LazyVGrid(columns: columns, spacing: 12) {
+                                    ForEach(section.campuses) { campus in
+                                        CampusGridItem(
+                                            name: campus.name,
+                                            isSelected: store.currentCampus?.id == campus.id
+                                        ) {
+                                            guard store.currentCampus?.id != campus.id else {
+                                                store.shouldPresentCampusDialog = false
+                                                return
+                                            }
+                                            store.pendingCampusSelectionID = campus.id
+                                            store.confirmPendingCampusSelection()
+                                            store.toast = "已切换到\(campus.name)"
+                                            store.shouldPresentCampusDialog = false
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
+                    .padding(.top, 8)
                 }
-                .frame(maxHeight: 360)
-
-                PrimaryButton(title: "确认选择", systemImage: "checkmark") {
-                    store.confirmPendingCampusSelection()
-                }
-                .opacity(store.pendingCampusSelectionID == nil ? 0.55 : 1)
-                .allowsHitTesting(store.pendingCampusSelectionID != nil)
             }
-            .padding(20)
-            .frame(width: 760)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(JWColor.divider))
-            .shadow(color: .black.opacity(0.1), radius: 22, x: 0, y: 10)
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 26)
+        .padding(.top, 20)
+        .padding(.bottom, 30)
+        .background(JWColor.surface)
     }
 }
 
@@ -146,6 +477,8 @@ private struct CampusGridItem: View {
                 Text(name)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(JWColor.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
@@ -154,7 +487,11 @@ private struct CampusGridItem: View {
             }
             .padding(.horizontal, 12)
             .frame(height: 48)
-            .background(isSelected ? JWColor.primaryLight : JWColor.surfaceMuted)
+            .background(isSelected ? JWColor.primaryLight : JWColor.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? JWColor.primary.opacity(0.35) : JWColor.divider, lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -164,83 +501,102 @@ private struct CampusGridItem: View {
 private struct SidebarView: View {
     @Environment(AppStore.self) private var store
     @Binding var isCollapsed: Bool
+    var openScanner: () -> Void
+    @State private var isLogoutConfirmPresented = false
+    private let primaryRoutes: [AppRoute] = [.workspace, .students, .assessment, .courseSelection, .orders, .schedule]
 
     var body: some View {
+        let edgeInset: CGFloat = 14
         VStack(spacing: 10) {
-            Group {
-                if isCollapsed {
-                    VStack(spacing: 6) {
-                        Image("DefaultAvatar")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 44, height: 44)
-                            .clipShape(Circle())
+            if isCollapsed {
+                Image("DefaultAvatar")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .padding(.top, edgeInset)
+            } else {
+                HStack(spacing: 10) {
+                    Image("DefaultAvatar")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 34, height: 34)
+                        .clipShape(Circle())
+                    Text(store.currentStaff?.name ?? "教务老师")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(JWColor.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.84)
+                        .layoutPriority(1)
+                    Spacer(minLength: 0)
+                    HeaderIconButton(systemImage: "ellipsis") {
+                        isLogoutConfirmPresented = true
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                } else {
-                    VStack(spacing: 8) {
-                        HStack(spacing: 10) {
-                            Image("DefaultAvatar")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 44, height: 44)
-                                .clipShape(Circle())
-                            Text(store.currentStaff?.name ?? "教务老师")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(JWColor.text)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
-                        }
-                    }
-                    .padding(.horizontal, 8)
+                    .rotationEffect(.degrees(90))
                 }
-            }
-            .padding(.top, 16)
+                .padding(.horizontal, 8)
+                .padding(.top, edgeInset)
+                .padding(.bottom, 4)
 
-            VStack(spacing: 4) {
-                ForEach(AppRoute.allCases) { route in
+                Button {
+                    store.pendingCampusSelectionID = store.currentCampus?.id
+                    store.shouldPresentCampusDialog = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(JWColor.text.opacity(0.72))
+                        Text(store.currentCampus?.name ?? "请选择校区")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(JWColor.text)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(JWColor.text.opacity(0.6))
+                    }
+                    .padding(.horizontal, 10)
+                    .frame(height: 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(JWColor.text.opacity(0.06))
+                    )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 10)
+
+                Rectangle()
+                    .fill(JWColor.divider)
+                    .frame(height: 1)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 12)
+            }
+
+            VStack(spacing: 8) {
+                ForEach(primaryRoutes) { route in
                     Button {
                         store.navigate(route)
                     } label: {
                         HStack(spacing: 10) {
-                            VStack(spacing: 5) {
-                                Image(systemName: route.symbol)
-                                    .font(.system(size: 17, weight: .medium))
-                                    .symbolRenderingMode(.hierarchical)
-                            }
-                            .frame(width: 44, height: 44)
-                            .foregroundStyle(store.route == route ? JWColor.primary : JWColor.textMuted)
+                            Image(systemName: route.symbol)
+                                .font(.system(size: 17, weight: .semibold))
+                                .frame(width: 28, height: 28)
+                                .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text.opacity(0.68))
                             if !isCollapsed {
                                 Text(route.rawValue)
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text)
+                                    .foregroundStyle(store.route == route ? JWColor.primary : JWColor.text.opacity(0.78))
                                 Spacer(minLength: 0)
                             }
                         }
-                        .frame(
-                            maxWidth: isCollapsed ? 44 : .infinity,
-                            alignment: isCollapsed ? .center : .leading
-                        )
-                        .frame(height: 48)
+                        .padding(.horizontal, isCollapsed ? 0 : 12)
+                        .frame(maxWidth: isCollapsed ? 44 : .infinity, alignment: isCollapsed ? .center : .leading)
+                        .frame(height: 44)
                         .background(
-                            Group {
-                                if store.route == route {
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .fill(JWColor.primaryLight.opacity(0.28))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .stroke(Color.white.opacity(0.75), lineWidth: 1)
-                                        )
-                                        .shadow(color: Color.white.opacity(0.45), radius: 1, x: 0, y: 0)
-                                        .shadow(color: JWColor.primary.opacity(0.16), radius: 10, x: 0, y: 4)
-                                }
-                            }
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(store.route == route ? JWColor.text.opacity(0.08) : .clear)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -248,63 +604,276 @@ private struct SidebarView: View {
             }
             .padding(.horizontal, isCollapsed ? 10 : 12)
             Spacer()
-            Button {
-                store.toast = "扫码页为前端占位"
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.system(size: 22, weight: .semibold))
-                        .frame(width: 44, height: 44)
-                    if !isCollapsed {
-                        Text("扫码")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer(minLength: 0)
+
+            VStack(spacing: 12) {
+                SidebarToolButton(systemImage: "qrcode.viewfinder", title: "扫一扫", isCollapsed: isCollapsed) {
+                    openScanner()
+                }
+
+                if isCollapsed {
+                    Button {
+                        store.pendingCampusSelectionID = store.currentCampus?.id
+                        store.shouldPresentCampusDialog = true
+                    } label: {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(JWColor.text.opacity(0.78))
+                            .frame(width: 38, height: 38)
+                            .background(JWColor.text.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    HeaderIconButton(systemImage: "ellipsis") {
+                        isLogoutConfirmPresented = true
+                    }
+                    .rotationEffect(.degrees(90))
+                } else {
+                    SidebarToolButton(
+                        systemImage: "sidebar.left",
+                        title: "收起侧栏",
+                        isCollapsed: false
+                    ) {
+                        isCollapsed.toggle()
                     }
                 }
-                .padding(.horizontal, isCollapsed ? 2 : 10)
-            }
-            .buttonStyle(.plain)
-            Button {
-                store.isLoggedIn = false
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 22, weight: .bold))
-                        .frame(width: 44, height: 40)
-                    if !isCollapsed {
-                        Text("退出登录")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer(minLength: 0)
+
+                if isCollapsed {
+                    SidebarToolButton(systemImage: "sidebar.leading", title: "展开侧栏", isCollapsed: true) {
+                        isCollapsed.toggle()
                     }
                 }
-                .padding(.horizontal, isCollapsed ? 2 : 10)
             }
-            .buttonStyle(.plain)
-            Button {
-                isCollapsed.toggle()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: isCollapsed ? "sidebar.leading" : "sidebar.left")
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(width: 44, height: 40)
-                    if !isCollapsed {
-                        Text(isCollapsed ? "展开侧栏" : "收起侧栏")
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer(minLength: 0)
-                    }
-                }
-                .padding(.horizontal, isCollapsed ? 2 : 10)
-            }
-            .buttonStyle(.plain)
         }
-        .padding(.horizontal, isCollapsed ? 8 : 10)
-        .padding(.vertical, 10)
+        .padding(.horizontal, isCollapsed ? 8 : 8)
+        .padding(.top, 10)
+        .padding(.bottom, edgeInset)
         .foregroundStyle(JWColor.text)
-        .frame(width: isCollapsed ? 72 : 188)
+        .frame(width: isCollapsed ? 72 : 166)
         .frame(maxHeight: .infinity)
         .background(JWColor.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(JWColor.divider, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .alert("退出登录", isPresented: $isLogoutConfirmPresented) {
+            Button("取消", role: .cancel) {}
+            Button("退出", role: .destructive) {
+                store.isLoggedIn = false
+            }
+        } message: {
+            Text("确认退出当前账号吗？")
+        }
+        .frame(width: isCollapsed ? 72 : 166)
+    }
+}
+
+private struct HeaderIconButton: View {
+    var systemImage: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(JWColor.text.opacity(0.72))
+                .frame(width: 26, height: 26)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct ScanFullScreenView: View {
+    var close: () -> Void
+    @State private var torchOn = false
+    @State private var scanLineProgress: CGFloat = 0.18
+
+    var body: some View {
+        ZStack {
+            backgroundLayer
+            Color.black.opacity(0.34).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                topBar
+                Spacer(minLength: 0)
+                scanBox
+                Spacer(minLength: 0)
+                bottomTools
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.55).repeatForever(autoreverses: true)) {
+                scanLineProgress = 0.82
+            }
+        }
+    }
+
+    private var backgroundLayer: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(red: 0.48, green: 0.45, blue: 0.41), Color(red: 0.33, green: 0.35, blue: 0.37)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 34) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.white.opacity(0.08))
+                    .frame(width: 980, height: 180)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white.opacity(0.07))
+                    .frame(width: 860, height: 340)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: 1080, height: 260)
+            }
+            .blur(radius: 4)
+        }
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button(action: close) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 56)
+                    .background(Color.black.opacity(0.56))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 46)
+        .padding(.horizontal, 30)
+    }
+
+    private var scanBox: some View {
+        VStack(spacing: 22) {
+            Text("将二维码/条形码放入框内，即可自动扫描")
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(.white.opacity(0.92))
+
+            GeometryReader { geo in
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.white.opacity(0.68), lineWidth: 2)
+
+                    cornerGuide(.topLeading)
+                    cornerGuide(.topTrailing)
+                    cornerGuide(.bottomLeading)
+                    cornerGuide(.bottomTrailing)
+
+                    Rectangle()
+                        .fill(JWColor.primary.opacity(0.95))
+                        .frame(height: 3)
+                        .padding(.horizontal, 24)
+                        .offset(y: geo.size.height * scanLineProgress)
+                        .shadow(color: JWColor.primary.opacity(0.55), radius: 10, x: 0, y: 2)
+                }
+            }
+            .frame(width: 620, height: 620)
+        }
+    }
+
+    private var bottomTools: some View {
+        HStack {
+            Spacer(minLength: 0)
+            toolButton(symbol: "flashlight.on.fill", title: torchOn ? "已开启照亮" : "轻触照亮") {
+                torchOn.toggle()
+            }
+            Spacer(minLength: 160)
+            toolButton(symbol: "photo.on.rectangle", title: "相册选择") {
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.bottom, 72)
+    }
+
+    private func toolButton(symbol: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 14) {
+                Image(systemName: symbol)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 82, height: 82)
+                    .background(Color.black.opacity(0.56))
+                    .clipShape(Circle())
+                Text(title)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.95))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func cornerGuide(_ corner: Alignment) -> some View {
+        ZStack {
+            RoundedCorner(corner: corner)
+                .stroke(.white, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                .frame(width: 56, height: 56)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: corner)
+        .padding(18)
+    }
+}
+
+private struct RoundedCorner: Shape {
+    let corner: Alignment
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let r = min(rect.width, rect.height) * 0.82
+        switch corner {
+        case .topLeading:
+            path.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
+        case .topTrailing:
+            path.move(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + r))
+        case .bottomLeading:
+            path.move(to: CGPoint(x: rect.minX + r, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
+        default:
+            path.move(to: CGPoint(x: rect.maxX - r, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
+        }
+        return path
+    }
+}
+
+private struct SidebarToolButton: View {
+    var systemImage: String
+    var title: String
+    var isCollapsed: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .foregroundStyle(JWColor.text.opacity(0.72))
+                if !isCollapsed {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(JWColor.text.opacity(0.78))
+                    Spacer(minLength: 0)
+                }
+            }
+            .padding(.horizontal, isCollapsed ? 0 : 12)
+            .frame(maxWidth: isCollapsed ? 44 : .infinity, alignment: isCollapsed ? .center : .leading)
+            .frame(height: 40)
+            .background(JWColor.surfaceMuted.opacity(0.18))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(JWColor.divider.opacity(0.7), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -336,7 +905,7 @@ private struct TopBarView: View {
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.58)))
             HStack(spacing: 12) {
                 Label("2026-05-07 周四", systemImage: "calendar")
-                Label(store.currentCampus?.name ?? "XiangShuW", systemImage: "mappin.and.ellipse")
+                Label(store.currentCampus?.name ?? "XiangShuW", systemImage: "location.fill")
             }
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(JWColor.textMuted)
@@ -641,7 +1210,6 @@ private struct SignupSuccessModal: View {
 private struct ScheduleView: View {
     @Environment(AppStore.self) private var store
     @State private var showReorder = false
-    @State private var consultCount = ""
 
     var body: some View {
         VStack(spacing: 14) {
@@ -655,15 +1223,27 @@ private struct ScheduleView: View {
                     HStack {
                         SectionTitle(title: session.title)
                         Spacer()
-                        SecondaryButton(title: "重新排座", systemImage: "arrow.up.arrow.down") { showReorder = true }
+                        if store.sessionState.activeTab == .seats {
+                            SecondaryButton(title: "重新排座", systemImage: "arrow.up.arrow.down") { showReorder = true }
+                        }
                         SecondaryButton(title: "试卷批改", systemImage: "doc.text.magnifyingglass") { store.navigate(.assessment) }
                     }
-                    ScheduleTable(session: session)
+                    SessionOperationTabBar(activeTab: store.sessionState.activeTab) { tab in
+                        store.setSessionTab(tab)
+                    }
+                    switch store.sessionState.activeTab {
+                    case .seats:
+                        ScheduleTable(session: session)
+                    case .attendance:
+                        SessionAttendanceTable(session: session)
+                    case .marking:
+                        SessionMarkingTable(session: session)
+                    }
                 }
-                .padding(16)
+                .padding(24)
                 .background(JWColor.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(JWColor.divider))
             }
         }
         .overlay {
@@ -680,6 +1260,33 @@ private struct ScheduleView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+private struct SessionOperationTabBar: View {
+    var activeTab: SessionOperationTab
+    var setTab: (SessionOperationTab) -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(SessionOperationTab.allCases) { tab in
+                Button(action: { setTab(tab) }) {
+                    Text(tab.rawValue)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(activeTab == tab ? JWColor.primary : JWColor.textMuted)
+                        .padding(.horizontal, 14)
+                        .frame(height: 36)
+                        .background(activeTab == tab ? JWColor.primaryLight : JWColor.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .stroke(activeTab == tab ? JWColor.primary : JWColor.divider, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
         }
     }
 }
@@ -727,8 +1334,15 @@ private struct ScheduleTable: View {
                             .foregroundStyle(JWColor.textMuted)
                         HStack(spacing: 8) {
                             InlineActionButton(title: "打电话", systemImage: "phone.fill") {
-                                let phone = store.studentByID(seat.studentID)?.phone ?? "--"
-                                store.toast = "拨号占位：\(phone)"
+                                guard let student = store.studentByID(seat.studentID) else { return }
+                                store.openCallDrawer(
+                                    role: .student,
+                                    name: student.name,
+                                    phone: student.phone,
+                                    studentNumber: student.number,
+                                    grade: student.grade,
+                                    creditScore: student.creditScore
+                                )
                             }
                             InlineActionButton(title: "扫码登录", systemImage: "qrcode.viewfinder") {
                                 store.toast = "扫码登录占位"
@@ -786,6 +1400,118 @@ private struct ScheduleTable: View {
                 }
                 .font(.system(size: 14, weight: .medium))
                 .padding(.vertical, 16)
+                .padding(.horizontal, 12)
+                .background(JWColor.surface)
+                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+            }
+        }
+    }
+}
+
+private struct SessionAttendanceTable: View {
+    @Environment(AppStore.self) private var store
+    var session: TestSession
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                TableHeader("座位号", width: 80)
+                TableHeader("学员", width: 180)
+                TableHeader("学员签到", width: 120)
+                TableHeader("家长签到", width: 120)
+                TableHeader("状态", width: 120)
+                TableHeader("操作", width: 120)
+                Spacer()
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+
+            ForEach(session.seats) { seat in
+                let student = store.studentByID(seat.studentID)
+                HStack {
+                    Text("\(seat.seatNo)")
+                        .frame(width: 80, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(student?.name ?? store.studentName(seat.studentID))
+                            .font(.system(size: 15, weight: .bold))
+                        Text(student?.phone ?? "")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(JWColor.textMuted)
+                    }
+                    .frame(width: 180, alignment: .leading)
+                    CheckButton(isOn: seat.studentCheckedIn) { store.toggleStudentCheckIn(sessionID: session.id, seatID: seat.id) }
+                        .frame(width: 120)
+                    CheckButton(isOn: seat.parentCheckedIn) { store.toggleParentCheckIn(sessionID: session.id, seatID: seat.id) }
+                        .frame(width: 120)
+                    StatusBadge(title: seat.studentCheckedIn && seat.parentCheckedIn ? "齐" : "待补", tint: seat.studentCheckedIn && seat.parentCheckedIn ? JWColor.success : JWColor.warning)
+                        .frame(width: 120, alignment: .leading)
+                    InlineActionButton(title: "打电话", systemImage: "phone.fill") {
+                        guard let student else { return }
+                        store.openCallDrawer(
+                            role: .student,
+                            name: student.name,
+                            phone: student.phone,
+                            studentNumber: student.number,
+                            grade: student.grade,
+                            creditScore: student.creditScore
+                        )
+                    }
+                    .frame(width: 120, alignment: .leading)
+                    Spacer()
+                }
+                .font(.system(size: 14, weight: .medium))
+                .padding(.vertical, 14)
+                .padding(.horizontal, 12)
+                .background(JWColor.surface)
+                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+            }
+        }
+    }
+}
+
+private struct SessionMarkingTable: View {
+    @Environment(AppStore.self) private var store
+    var session: TestSession
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                TableHeader("座位号", width: 80)
+                TableHeader("学员", width: 180)
+                TableHeader("测试科目")
+                TableHeader("结果", width: 90)
+                TableHeader("操作", width: 180)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+
+            ForEach(session.seats) { seat in
+                let student = store.studentByID(seat.studentID)
+                HStack {
+                    Text("\(seat.seatNo)")
+                        .frame(width: 80, alignment: .leading)
+                    Text(student?.name ?? store.studentName(seat.studentID))
+                        .font(.system(size: 15, weight: .bold))
+                        .frame(width: 180, alignment: .leading)
+                    Text(seat.subjects.map(\.title).joined(separator: " / "))
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(seat.result.map(String.init) ?? "待录入")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(JWColor.primary)
+                        .frame(width: 90, alignment: .leading)
+                    HStack(spacing: 10) {
+                        InlineActionButton(title: "去批改", systemImage: "pencil") {
+                            store.navigate(.assessment)
+                        }
+                        InlineActionButton(title: "换科目", systemImage: "arrow.triangle.2.circlepath") {
+                            store.toast = "换科目入口占位"
+                        }
+                    }
+                    .frame(width: 180, alignment: .leading)
+                }
+                .font(.system(size: 14, weight: .medium))
+                .padding(.vertical, 14)
                 .padding(.horizontal, 12)
                 .background(JWColor.surface)
                 .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
@@ -943,7 +1669,15 @@ private struct AttendanceTable: View {
                             .frame(width: 100, alignment: .leading)
                         Spacer()
                         SecondaryButton(title: "联系", systemImage: "phone", tint: JWColor.primary) {
-                            store.toast = "已复制家长联系方式"
+                            guard let student = store.studentByID(record.studentID) else { return }
+                            store.openCallDrawer(
+                                role: .student,
+                                name: student.name,
+                                phone: student.phone,
+                                studentNumber: student.number,
+                                grade: student.grade,
+                                creditScore: student.creditScore
+                            )
                         }
                     }
                     .padding(.horizontal, 16)
@@ -1416,37 +2150,85 @@ private struct OrdersView: View {
     @State private var showRefund = false
 
     var rows: [Order] {
-        store.orders.filter { $0.status == tab && (search.isEmpty || $0.courseTitle.localizedStandardContains(search) || store.studentName($0.studentID).localizedStandardContains(search)) }
+        store.orders.filter {
+            $0.status == tab &&
+            (search.isEmpty || $0.courseTitle.localizedStandardContains(search) || store.studentName($0.studentID).localizedStandardContains(search)) &&
+            flowState(for: $0) == store.orderState.refundState
+        }
+    }
+
+    private var currentFlowLabel: String {
+        store.orderState.refundState.rawValue
+    }
+
+    private var totalAmount: Int {
+        rows.reduce(0) { $0 + $1.amount }
+    }
+
+    private func flowState(for order: Order) -> RefundFlowState {
+        switch order.status {
+        case .pending: return .draft
+        case .paid: return .confirmed
+        case .refunded: return .submitted
+        case .recycled: return .validating
+        }
     }
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 0) {
-                VStack(spacing: 12) {
-                    SearchField(placeholder: "搜索班级或学员", text: $search)
-                    HStack {
-                        ForEach(OrderStatus.allCases) { status in
-                            FilterChip(title: status.rawValue, isSelected: tab == status) { tab = status }
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 14) {
+                    MetricCard(title: "当前筛选订单", value: "\(rows.count)", tint: JWColor.primary, systemImage: "list.bullet.rectangle")
+                    MetricCard(title: "筛选订单金额", value: "¥\(totalAmount)", tint: JWColor.success, systemImage: "yensign.circle")
+                    MetricCard(title: "退款流程", value: currentFlowLabel, tint: JWColor.warning, systemImage: "arrow.triangle.branch")
+                }
+
+                VStack(spacing: 0) {
+                    VStack(spacing: 12) {
+                        SearchField(placeholder: "搜索班级或学员", text: $search)
+                        HStack {
+                            ForEach(OrderStatus.allCases) { status in
+                                FilterChip(title: status.rawValue, isSelected: tab == status) { tab = status }
+                            }
+                            Spacer()
                         }
-                        Spacer()
+                        HStack(spacing: 8) {
+                            ForEach(RefundFlowState.allCases) { state in
+                                Button(action: { store.orderState.refundState = state }) {
+                                    Text(state.rawValue)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(store.orderState.refundState == state ? JWColor.primary : JWColor.textMuted)
+                                        .padding(.horizontal, 12)
+                                        .frame(height: 32)
+                                        .background(store.orderState.refundState == state ? JWColor.primaryLight : JWColor.surface)
+                                        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                                .stroke(store.orderState.refundState == state ? JWColor.primary : JWColor.divider, lineWidth: 1)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .padding(16)
+                    .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
+
+                    OrderTable(rows: rows) { order in
+                        store.selectedOrderID = order.id
+                        showRefund = true
                     }
                 }
-                .padding(16)
-                .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
-
-                OrderTable(rows: rows) { order in
-                    store.selectedOrderID = order.id
-                    showRefund = true
-                }
+                .background(JWColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(JWColor.divider))
             }
-            .background(JWColor.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
             .frame(maxWidth: .infinity)
             .layoutPriority(1)
 
-            RefundSummaryPanel()
-                .frame(width: 260)
+            RefundSummaryPanel(flowState: store.orderState.refundState)
+                .frame(width: 280)
         }
         .overlay {
             if showRefund, let order = store.selectedOrder {
@@ -1460,14 +2242,25 @@ private struct OrderTable: View {
     var rows: [Order]
     var refund: (Order) -> Void
 
+    private func flowStateText(_ status: OrderStatus) -> String {
+        switch status {
+        case .pending: return RefundFlowState.draft.rawValue
+        case .paid: return RefundFlowState.confirmed.rawValue
+        case .refunded: return RefundFlowState.submitted.rawValue
+        case .recycled: return RefundFlowState.validating.rawValue
+        }
+    }
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             VStack(spacing: 0) {
                 HStack {
-                    DataTableHeader("订单", width: 280)
+                    DataTableHeader("订单", width: 260)
                     DataTableHeader("学员", width: 110)
-                    DataTableHeader("金额", width: 90)
+                    DataTableHeader("金额", width: 96)
                     DataTableHeader("收款", width: 150)
+                    DataTableHeader("退款流程", width: 120)
+                    DataTableHeader("操作", width: 120)
                     Spacer()
                 }
                 .padding(.horizontal, 16)
@@ -1475,15 +2268,15 @@ private struct OrderTable: View {
                 .background(JWColor.surfaceMuted)
 
                 if rows.isEmpty {
-                    EmptyStateView(title: "当前暂无订单", systemImage: "creditcard")
+                    EmptyStateView(title: "当前筛选下暂无订单", systemImage: "creditcard")
                         .frame(minHeight: 440)
                 } else {
                     ForEach(rows) { order in
-                        OrderRow(order: order) { refund(order) }
+                        OrderRow(order: order, flowText: flowStateText(order.status)) { refund(order) }
                     }
                 }
             }
-            .frame(minWidth: 760, minHeight: 500, alignment: .topLeading)
+            .frame(minWidth: 900, minHeight: 500, alignment: .topLeading)
         }
         .frame(minHeight: 500, alignment: .topLeading)
     }
@@ -1492,6 +2285,7 @@ private struct OrderTable: View {
 private struct OrderRow: View {
     @Environment(AppStore.self) private var store
     var order: Order
+    var flowText: String
     var refund: () -> Void
 
     var body: some View {
@@ -1507,7 +2301,7 @@ private struct OrderRow: View {
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(JWColor.textMuted)
             }
-            .frame(width: 280, alignment: .leading)
+            .frame(width: 260, alignment: .leading)
             Text(store.studentName(order.studentID))
                 .font(.system(size: 15, weight: .semibold))
                 .frame(width: 110, alignment: .leading)
@@ -1515,7 +2309,7 @@ private struct OrderRow: View {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(order.amount == 0 ? JWColor.danger : JWColor.text)
                 .monospacedDigit()
-                .frame(width: 90, alignment: .leading)
+                .frame(width: 96, alignment: .leading)
             VStack(alignment: .leading, spacing: 4) {
                 Text(order.receiver)
                     .font(.system(size: 14, weight: .bold))
@@ -1524,10 +2318,20 @@ private struct OrderRow: View {
                     .foregroundStyle(JWColor.textMuted)
             }
             .frame(width: 150, alignment: .leading)
-            Spacer()
-            if order.status == .paid {
-                SecondaryButton(title: "退款", systemImage: "arrow.uturn.backward", tint: JWColor.danger, action: refund)
+            StatusBadge(
+                title: flowText,
+                tint: flowText == RefundFlowState.submitted.rawValue ? JWColor.success : (flowText == RefundFlowState.confirmed.rawValue ? JWColor.warning : JWColor.textMuted)
+            )
+            .frame(width: 120, alignment: .leading)
+            HStack(spacing: 8) {
+                if order.status == .paid {
+                    SecondaryButton(title: "退款", systemImage: "arrow.uturn.backward", tint: JWColor.danger, action: refund)
+                } else {
+                    SecondaryButton(title: "详情", systemImage: "doc.text.magnifyingglass", tint: JWColor.primary) {}
+                }
             }
+            .frame(width: 120, alignment: .leading)
+            Spacer()
         }
         .padding(.horizontal, 16)
         .frame(height: 76)
@@ -1537,12 +2341,27 @@ private struct OrderRow: View {
 
 private struct RefundSummaryPanel: View {
     @Environment(AppStore.self) private var store
+    var flowState: RefundFlowState
+
+    private var matchingRefunds: [Refund] {
+        switch flowState {
+        case .submitted:
+            return store.refunds
+        case .confirmed:
+            return store.refunds.filter { $0.amount > 0 }
+        case .validating:
+            return store.refunds.filter { $0.note.isEmpty }
+        case .draft:
+            return store.refunds.filter { !$0.note.isEmpty }
+        }
+    }
 
     var body: some View {
         AppCard {
             VStack(alignment: .leading, spacing: 16) {
                 SectionTitle(title: "退款概览", actionTitle: nil)
                 VStack(spacing: 10) {
+                    MetricLine(label: "当前流程", value: flowState.rawValue)
                     MetricLine(label: "可退款订单", value: "\(store.paidOrders.count)")
                     MetricLine(label: "已退款", value: "\(store.refunds.count)")
                     MetricLine(label: "退款金额", value: "¥ \(store.refunds.reduce(0) { $0 + $1.amount })")
@@ -1550,12 +2369,12 @@ private struct RefundSummaryPanel: View {
                 Divider()
                 Text("最近退款")
                     .font(.system(size: 15, weight: .bold))
-                if store.refunds.isEmpty {
-                    Text("暂无退款记录")
+                if matchingRefunds.isEmpty {
+                    Text("当前流程下暂无退款记录")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(JWColor.textMuted)
                 } else {
-                    ForEach(store.refunds.prefix(4)) { refund in
+                    ForEach(matchingRefunds.prefix(4)) { refund in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(refund.reason)
                                 .font(.system(size: 14, weight: .bold))

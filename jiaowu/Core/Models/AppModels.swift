@@ -3,35 +3,37 @@ import SwiftUI
 
 enum AppRoute: String, CaseIterable, Identifiable {
     case workspace = "工作台"
-    case students = "学员"
+    case assessment = "诊断"
     case courseSelection = "选课"
     case schedule = "课表"
-    case attendance = "考勤"
-    case assessment = "测评"
-    case orders = "订单"
+    case orders = "活动"
+    case students = "学员"
+    case attendance = "审批"
 
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
         case .workspace: "house.fill"
+        case .assessment: "doc.text.magnifyingglass"
+        case .courseSelection: "books.vertical.fill"
+        case .schedule: "calendar"
+        case .orders: "receipt.fill"
         case .students: "person.2.fill"
-        case .courseSelection: "graduationcap.fill"
-        case .schedule: "calendar.badge.clock"
-        case .attendance: "checkmark.seal.fill"
-        case .assessment: "doc.text.fill"
-        case .orders: "creditcard.fill"
+        case .attendance: "checkmark.circle.fill"
         }
     }
 }
 
 struct Campus: Identifiable, Hashable {
     let id: UUID
+    var region: String
     var name: String
     var rooms: [Classroom]
 
-    init(id: UUID = UUID(), name: String, rooms: [Classroom]) {
+    init(id: UUID = UUID(), region: String = "", name: String, rooms: [Classroom]) {
         self.id = id
+        self.region = region
         self.name = name
         self.rooms = rooms
     }
@@ -57,12 +59,20 @@ struct StaffUser: Identifiable, Hashable {
     let id: UUID
     var name: String
     var campusName: String
+    var phone: String
     var avatarSymbol: String
 
-    init(id: UUID = UUID(), name: String, campusName: String, avatarSymbol: String = "person.crop.circle.fill") {
+    init(
+        id: UUID = UUID(),
+        name: String,
+        campusName: String,
+        phone: String = "13067510619",
+        avatarSymbol: String = "person.crop.circle.fill"
+    ) {
         self.id = id
         self.name = name
         self.campusName = campusName
+        self.phone = phone
         self.avatarSymbol = avatarSymbol
     }
 }
@@ -391,6 +401,35 @@ struct WorkspaceState {
     var pinnedTasks: [String] = ["处理未签到", "完成待批改", "检查退款请求"]
 }
 
+enum WorkspaceAlertDrawerFilter {
+    case all
+    case absentStudent
+    case absentTeacher
+    case absentAssistant
+
+    var title: String {
+        switch self {
+        case .all: return "异常提醒"
+        case .absentStudent: return "今日缺勤学员"
+        case .absentTeacher: return "今日缺勤老师"
+        case .absentAssistant: return "今日缺勤助教"
+        }
+    }
+
+    func includes(_ alert: WorkspaceAlert) -> Bool {
+        switch self {
+        case .all:
+            return true
+        case .absentStudent:
+            return alert.category.contains("学生未到") || alert.category.contains("学员缺勤")
+        case .absentTeacher:
+            return alert.category.contains("老师缺勤")
+        case .absentAssistant:
+            return alert.category.contains("助教缺勤")
+        }
+    }
+}
+
 struct EnrollmentState {
     var step: EnrollmentStep = .filterCourse
     var qualification: EnrollmentQualification = .unknown
@@ -407,6 +446,49 @@ struct AttendanceState {
 
 struct OrderState {
     var refundState: RefundFlowState = .draft
+}
+
+enum CallTargetRole: String, CaseIterable, Identifiable {
+    case teacher = "老师"
+    case assistant = "助教"
+    case student = "学员"
+    var id: String { rawValue }
+}
+
+struct CallContactPhone: Identifiable, Hashable {
+    let id = UUID()
+    var relation: String
+    var phone: String
+    var isPrimary: Bool
+}
+
+struct CallDrawerContext: Identifiable {
+    let id = UUID()
+    var role: CallTargetRole
+    var name: String
+    var phone: String
+    var avatarURL: String?
+    var contactPhones: [CallContactPhone]
+    var studentNumber: String?
+    var grade: String?
+    var creditScore: Int?
+    var workspaceAlertID: UUID?
+    var note: String
+}
+
+struct TeacherProfile: Identifiable, Hashable {
+    let id = UUID()
+    var name: String
+    var phone: String
+    var campus: String
+    var department: String
+    var onboardDate: String
+    var yearsOfTeaching: String
+    var graduateSchool: String
+    var subjects: String
+    var tags: [String]
+    var motto: String
+    var bio: String
 }
 
 struct TestAnswer: Identifiable, Hashable {
