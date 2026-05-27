@@ -19,6 +19,8 @@ private struct AppShell: View {
     @Environment(AppStore.self) private var store
     @State private var isSidebarCollapsed = false
     @State private var isScannerPresented = false
+    @State private var onlyUncontactedStudentAlerts = false
+    @State private var selectedWorkspaceStudent: WorkspaceStudentResult?
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -42,6 +44,7 @@ private struct AppShell: View {
                     .clipShape(Capsule())
                     .padding(.top, 18)
                     .onTapGesture { store.toast = nil }
+                    .zIndex(100)
             }
 
             if let context = store.callDrawer {
@@ -122,19 +125,34 @@ private struct AppShell: View {
                     title: store.workspaceAlertDrawerFilter.title,
                     alerts: workspaceFilteredAlerts,
                     showSurnameIndex: store.workspaceAlertDrawerFilter == .absentStudent,
+                    showOnlyUncontactedToggle: store.workspaceAlertDrawerFilter == .absentStudent,
+                    onlyUncontacted: onlyUncontactedStudentAlerts,
                     collapse: dismissWorkspaceAlertDrawer,
+                    toggleOnlyUncontacted: { onlyUncontactedStudentAlerts.toggle() },
+                    openStudentDetailAction: { alert in
+                        store.toast = "打开学员详情：\(alert.contactName)"
+                    },
                     contactAction: { alert in
                         let role: CallTargetRole = alert.actionTitle.contains("老师") ? .teacher : (alert.actionTitle.contains("助教") ? .assistant : .student)
-                        store.openCallDrawer(role: role, name: alert.contactName, phone: alert.phone)
+                        store.openCallDrawer(
+                            role: role,
+                            name: alert.contactName,
+                            phone: alert.phone,
+                            studentNumber: alert.studentNumber,
+                            workspaceAlertID: alert.id,
+                            note: alert.contactNote ?? ""
+                        )
                     },
                     markAction: markWorkspaceAlertAsContacted,
-                    quickSignAction: quickSignWorkspaceAlert
+                    quickSignAction: quickSignWorkspaceAlert,
+                    rescheduleAction: rescheduleWorkspaceAlert,
+                    transferAction: transferWorkspaceAlert
                 )
-                .frame(width: 468)
+                .frame(width: 640)
                 .frame(maxHeight: .infinity, alignment: .top)
-                .padding(.trailing, 8)
+                .padding(.trailing, 20)
                 .padding(.vertical, 20)
-                .offset(x: store.workspaceAlertDrawerVisible ? 0 : 484)
+                .offset(x: store.workspaceAlertDrawerVisible ? 0 : 680)
             }
             .onAppear {
                 withAnimation(.easeOut(duration: 0.24)) {
@@ -160,12 +178,29 @@ private struct AppShell: View {
             }
             .zIndex(17)
         }
+
+        if let student = selectedWorkspaceStudent {
+            StudentQuickDetailSheet(
+                student: student,
+                close: { selectedWorkspaceStudent = nil },
+                enroll: {
+                    selectedWorkspaceStudent = nil
+                    store.navigate(.courseSelection)
+                },
+                assessment: {
+                    selectedWorkspaceStudent = nil
+                    store.navigate(.assessment)
+                }
+            )
+            .zIndex(18)
+        }
     }
 
     private var workspaceFilteredAlerts: [WorkspaceAlert] {
         let visible = store.workspaceAlerts.filter { store.workspaceAlertDrawerFilter.includes($0) }
-        let pending = visible.filter { !$0.isContacted }
-        let contacted = visible.filter(\.isContacted)
+        let source = (store.workspaceAlertDrawerFilter == .absentStudent && onlyUncontactedStudentAlerts) ? visible.filter { !$0.isContacted } : visible
+        let pending = source.filter { !$0.isContacted }
+        let contacted = source.filter(\.isContacted)
         return pending + contacted
     }
 
@@ -186,12 +221,39 @@ private struct AppShell: View {
 
     private func quickSignWorkspaceAlert(_ alert: WorkspaceAlert) {
         guard alert.category.contains("学生") else { return }
-        store.toast = "已为\(alert.contactName)完成签到"
-        markWorkspaceAlertAsContacted(alert)
+        guard let index = store.workspaceAlerts.firstIndex(where: { $0.id == alert.id }) else { return }
+        store.workspaceAlerts[index].isSignedIn.toggle()
+        store.toast = store.workspaceAlerts[index].isSignedIn ? "签到成功" : "已取消签到"
+    }
+
+    private func rescheduleWorkspaceAlert(_ alert: WorkspaceAlert) {
+        guard alert.category.contains("学生") else { return }
+        store.toast = "打开调课流程"
+    }
+
+    private func transferWorkspaceAlert(_ alert: WorkspaceAlert) {
+        guard alert.category.contains("学生") else { return }
+        store.toast = "打开转班流程"
+    }
+
+    private func makeStudentResult(from alert: WorkspaceAlert) -> WorkspaceStudentResult {
+        WorkspaceStudentResult(
+            name: alert.contactName,
+            grade: inferredGrade(from: alert.className) ?? "年级未识别",
+            phone: alert.phone,
+            courseState: alert.timeDetail,
+            className: alert.className ?? "--"
+        )
+    }
+
+    private func inferredGrade(from className: String?) -> String? {
+        guard let className else { return nil }
+        return ["一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "小升初", "初一", "初二", "初三", "高一", "高二", "高三"].first { className.contains($0) }
     }
 
     private func dismissWorkspaceAlertDrawer() {
         guard store.workspaceAlertDrawerVisible else {
+            store.workspaceAlerts.removeAll { $0.isSignedIn }
             store.workspaceAlertDrawerPresented = false
             return
         }
@@ -199,6 +261,7 @@ private struct AppShell: View {
             store.workspaceAlertDrawerVisible = false
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+            store.workspaceAlerts.removeAll { $0.isSignedIn }
             store.workspaceAlertDrawerPresented = false
         }
     }

@@ -154,7 +154,7 @@ struct ClassRosterDrawerSheet: View {
                 signText: teacherSignText,
                 signColor: session.teacherSignedIn ? JWColor.success : JWColor.danger,
                 showsChevron: true,
-                avatarView: AnyView(teacherAvatar)
+                avatarView: AnyView(teacherAvatar(name: session.teacher ?? ""))
             ) {
                 store.openCallDrawer(role: .teacher, name: session.teacher ?? "老师", phone: session.teacherPhone ?? "--")
             } openDetail: {
@@ -288,12 +288,16 @@ struct ClassRosterDrawerSheet: View {
     }
 
     private func labelTag(_ text: String) -> some View {
-        Text(text)
+        let isTransferOut = text == "转出"
+        let tint = isTransferOut ? JWColor.caution : JWColor.primary
+        let background = isTransferOut ? JWColor.caution.opacity(0.12) : JWColor.primaryLight
+
+        return Text(text)
             .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(JWColor.primary)
+            .foregroundStyle(tint)
             .padding(.horizontal, 7)
             .frame(height: 20)
-            .background(JWColor.primaryLight)
+            .background(background)
             .clipShape(Capsule())
     }
 
@@ -333,14 +337,22 @@ struct ClassRosterDrawerSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    private var teacherAvatar: some View {
-        AsyncImage(url: URL(string: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&q=80")) { phase in
-            switch phase {
-            case let .success(image):
-                image.resizable().scaledToFill()
-            default:
-                Color.gray.opacity(0.2)
-                    .overlay(Image(systemName: "person.crop.circle.fill").font(.system(size: 28)).foregroundStyle(JWColor.primary))
+    private func teacherAvatar(name: String) -> some View {
+        Group {
+            if name.contains("张明明") {
+                Image("ZhangMingmingAvatar")
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                AsyncImage(url: URL(string: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&q=80")) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image.resizable().scaledToFill()
+                    default:
+                        Color.gray.opacity(0.2)
+                            .overlay(Image(systemName: "person.crop.circle.fill").font(.system(size: 28)).foregroundStyle(JWColor.primary))
+                    }
+                }
             }
         }
         .frame(width: 54, height: 54)
@@ -510,14 +522,29 @@ struct ClassRosterDrawerSheet: View {
     }
 
     private func transferDetailArea(student: RosterStudent) -> some View {
-        let prefix = student.transferOutTag == "转出" ? "转出至：" : "调出至："
         let rawTarget = student.transferTarget ?? "待分配班级（第0次）"
-        let target = rawTarget
-            .replacingOccurrences(of: "（第", with: "（从第")
-            .replacingOccurrences(of: "次）", with: "课次开始）")
-        return Text("\(prefix)\(target)")
+        let target = transferTargetParts(from: rawTarget)
+        let text: String
+        if student.transferOutTag == "转出" {
+            text = "从第\(target.lesson)课次转出至：\(target.className)"
+        } else {
+            text = "当前课次调处至：\(target.className)"
+        }
+        return Text(text)
             .font(.system(size: 14, weight: .bold))
             .foregroundStyle(JWColor.text)
+    }
+
+    private func transferTargetParts(from rawTarget: String) -> (className: String, lesson: String) {
+        let className = rawTarget.components(separatedBy: "（").first?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lesson = rawTarget
+            .components(separatedBy: "第")
+            .dropFirst()
+            .first?
+            .components(separatedBy: "次")
+            .first?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return (className?.isEmpty == false ? className! : rawTarget, lesson?.isEmpty == false ? lesson! : "0")
     }
 
     private func exitDetailArea(student: RosterStudent) -> some View {

@@ -291,7 +291,9 @@ final class AppStore {
         avatarURL: String? = nil,
         studentNumber: String? = nil,
         grade: String? = nil,
-        creditScore: Int? = nil
+        creditScore: Int? = nil,
+        workspaceAlertID: UUID? = nil,
+        note: String? = nil
     ) {
         let contactPhones: [CallContactPhone]
         if role == .student {
@@ -312,8 +314,25 @@ final class AppStore {
             studentNumber: studentNumber,
             grade: grade,
             creditScore: creditScore,
-            note: "已联系对象，沟通今日到课与课堂表现。家长对课程进度表示认可，后续继续跟进学习反馈。"
+            workspaceAlertID: workspaceAlertID,
+            note: note ?? "已联系对象，沟通今日到课与课堂表现。家长对课程进度表示认可，后续继续跟进学习反馈。"
         )
+    }
+
+    func saveWorkspaceAlertContactNote(alertID: UUID?, name: String, note: String) {
+        let trimmedNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedNote.isEmpty else { return }
+
+        if let alertID, let index = workspaceAlerts.firstIndex(where: { $0.id == alertID }) {
+            workspaceAlerts[index].contactNote = trimmedNote
+            workspaceAlerts[index].isContacted = true
+            return
+        }
+
+        if let index = workspaceAlerts.firstIndex(where: { $0.contactName == name }) {
+            workspaceAlerts[index].contactNote = trimmedNote
+            workspaceAlerts[index].isContacted = true
+        }
     }
 
     func closeCallDrawer() {

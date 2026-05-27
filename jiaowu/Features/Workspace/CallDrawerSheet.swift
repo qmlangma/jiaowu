@@ -11,7 +11,6 @@ struct CallDrawerSheet: View {
 
     @State private var recordCall = false
     @State private var recordingSeconds = 0
-    @State private var callResult: String?
     @State private var selectedMethod: CallMethod = .qr
     @State private var landlineNumber = ""
     @State private var isFloatingCollapsed = false
@@ -53,9 +52,7 @@ struct CallDrawerSheet: View {
         !trimmedLandlineNumber.isEmpty
     }
 
-    private var canSaveRecord: Bool {
-        callResult != nil
-    }
+    private var canSaveRecord: Bool { true }
 
     private var shouldShowRecordingFile: Bool {
         !recordCall && recordingSeconds > 0
@@ -80,6 +77,21 @@ struct CallDrawerSheet: View {
 
     private var isStudentRole: Bool {
         context.role == .student
+    }
+
+    private var quickNotePhrases: [String] {
+        if !isStudentRole {
+            return ["未接", "拒绝", "空号"]
+        }
+        return ["未接*3", "拒绝", "空号", "请假", "发视频", "已告知家长不退不补", "老师反馈不用联系"]
+    }
+
+    private var trimmedNote: String {
+        noteBinding.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canSaveResult: Bool {
+        !trimmedNote.isEmpty
     }
 
     private var activePhoneDisplay: String {
@@ -374,23 +386,31 @@ struct CallDrawerSheet: View {
 
     private var callResultCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                Text("通话结果")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(JWColor.text)
-                Spacer(minLength: 0)
-            }
-
-            HStack(spacing: 8) {
-                resultPill("已接通")
-                resultPill("未接通")
-                resultPill("拒接")
-                resultPill("空号")
-            }
-
             Text("通话备注")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(JWColor.text)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(quickNotePhrases, id: \.self) { phrase in
+                        Button {
+                            appendQuickNote(phrase)
+                        } label: {
+                            Text(phrase)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(JWColor.primary)
+                                .padding(.horizontal, 10)
+                                .frame(height: 32)
+                                .background(JWColor.primaryLight)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(JWColor.primary.opacity(0.18), lineWidth: 1)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
             if shouldShowRecordingFile {
                 recordingFilePlaceholder
             }
@@ -440,12 +460,13 @@ struct CallDrawerSheet: View {
             .buttonStyle(.plain)
 
             HStack(spacing: 10) {
-                PrimaryButton(title: "保存通话记录", isEnabled: canSaveRecord) {
-                    guard let callResult else { return }
+                PrimaryButton(title: "保存通话结果", isEnabled: canSaveResult) {
+                    let currentNote = store.callDrawer?.note ?? context.note
+                    store.saveWorkspaceAlertContactNote(alertID: context.workspaceAlertID, name: context.name, note: currentNote)
                     if syncNoteToStudentProfile {
-                        store.toast = "已保存\(context.name)通话记录（\(callResult)），并同步至学员详情备注"
+                        store.toast = "已保存\(context.name)通话结果，并同步至学员详情备注"
                     } else {
-                        store.toast = "已保存\(context.name)通话记录（\(callResult)）"
+                        store.toast = "已保存\(context.name)通话结果"
                     }
                     dismissDrawer()
                 }
@@ -554,25 +575,6 @@ struct CallDrawerSheet: View {
         .buttonStyle(.plain)
     }
 
-    private func resultPill(_ title: String) -> some View {
-        Button {
-            callResult = title
-        } label: {
-            Text(title)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(callResult == title ? JWColor.primary : JWColor.text)
-                .padding(.horizontal, 12)
-                .frame(height: 34)
-                .background(callResult == title ? JWColor.primaryLight : JWColor.surface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(callResult == title ? JWColor.primary : JWColor.divider, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
     private func contactPhoneButton(_ contact: CallContactPhone) -> some View {
         let isSelected = activeContact.id == contact.id
         return Button {
@@ -612,6 +614,15 @@ struct CallDrawerSheet: View {
             return
         }
         selectedContactID = phoneContacts.first(where: \.isPrimary)?.id ?? phoneContacts.first?.id
+    }
+
+    private func appendQuickNote(_ phrase: String) {
+        let current = noteBinding.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if current.isEmpty {
+            noteBinding.wrappedValue = phrase
+        } else if !current.contains(phrase) {
+            noteBinding.wrappedValue = "\(current)；\(phrase)"
+        }
     }
 
     private func maskedPhone(_ phone: String) -> String {

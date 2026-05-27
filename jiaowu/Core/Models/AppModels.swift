@@ -472,6 +472,7 @@ struct CallDrawerContext: Identifiable {
     var studentNumber: String?
     var grade: String?
     var creditScore: Int?
+    var workspaceAlertID: UUID?
     var note: String
 }
 

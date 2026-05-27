@@ -159,7 +159,54 @@ struct WorkspaceView: View {
             if store.workspaceAlerts.isEmpty {
                 store.workspaceAlerts = WorkspaceMockData.alerts
             }
+            syncAlertClassNamesWithTodayCourses()
         }
+    }
+
+    private func syncAlertClassNamesWithTodayCourses() {
+        guard !store.workspaceAlerts.isEmpty else { return }
+
+        store.workspaceAlerts = store.workspaceAlerts.map { alert in
+            var updated = alert
+            updated.studentGrade = updated.studentGrade ?? inferredGrade(from: updated.className)
+            updated.studentSubject = updated.studentSubject ?? inferredSubject(from: updated.className)
+            if let room = alert.classroom,
+               let teacher = alert.classTeacher,
+               let matched = roomSessions.first(where: { $0.roomName == room && $0.teacher == teacher && $0.className != nil }),
+               let className = matched.className {
+                updated.className = className
+                return updated
+            }
+            if let room = alert.classroom,
+               let matched = roomSessions.first(where: { $0.roomName == room && $0.className != nil }),
+               let className = matched.className {
+                updated.className = className
+            }
+            return updated
+        }
+    }
+
+    private func inferredGrade(from className: String?) -> String? {
+        guard let className else { return nil }
+        return ["幼中班", "幼大班", "一年级", "二年级", "三年级", "四年级", "五年级", "六年级", "小升初", "初一", "初二", "初三", "高一", "高二", "高三"].first { className.contains($0) }
+    }
+
+    private func inferredSubject(from className: String?) -> String? {
+        guard let className else { return nil }
+        if className.contains("信息学算法") { return "信息学算法" }
+        if className.contains("信息学实验P") || className.contains("实验P") { return "信息学实验P" }
+        if className.contains("信息学实验C") || className.contains("实验C") { return "信息学实验C" }
+        if className.contains("国文素养") { return "国文素养" }
+        if className.contains("信息学语言传播") || className.contains("语言传播") { return "信息学语言传播" }
+        if className.contains("图形化编程") { return "图形化编程" }
+        if className.contains("Scratch") { return "Scratch" }
+        if className.contains("机器人") { return "机器人" }
+        if className.contains("Python") { return "Python" }
+        if className.contains("C++") { return "C++" }
+        if className.contains("逻辑思维") { return "逻辑思维" }
+        if className.contains("思维") { return "思维训练" }
+        if className.contains("算法") { return "算法" }
+        return nil
     }
 
     private func handleQuickAction(_ action: WorkspaceQuickAction) {

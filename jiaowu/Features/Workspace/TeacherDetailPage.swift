@@ -19,7 +19,6 @@ struct TeacherDetailPage: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 18) {
                             headCard
-                            importantInfoCard
                             featureCard
                             bioCard
                         }
@@ -77,12 +76,11 @@ struct TeacherDetailPage: View {
     private var headCard: some View {
         HStack(alignment: .top, spacing: 20) {
             VStack(spacing: 0) {
-                Spacer(minLength: 0)
                 teacherAvatar
-                    .frame(width: 190, height: 190)
-                Spacer(minLength: 0)
+                    .frame(width: 190, height: 244)
             }
             .frame(width: 190)
+            .padding(.vertical, 8)
 
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 12) {
@@ -172,38 +170,14 @@ struct TeacherDetailPage: View {
     }
 
     private var teacherAvatar: some View {
-        AsyncImage(url: URL(string: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=720&q=80")) { phase in
-            switch phase {
-            case let .success(image):
-                image.resizable().scaledToFill()
-            default:
-                Image("DefaultAvatar")
-                    .resizable()
-                    .scaledToFill()
-            }
-        }
+        Image("ZhangMingmingAvatar")
+            .resizable()
+            .scaledToFill()
         .overlay(
             RoundedRectangle(cornerRadius: 30, style: .continuous)
                 .stroke(JWColor.divider, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-    }
-
-    private var importantInfoCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("基础信息", systemImage: "person.text.rectangle.fill")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(JWColor.text)
-            HStack(spacing: 12) {
-                teacherMetaStat(title: "所属校区", value: teacher.campus)
-                teacherMetaStat(title: "所属部门", value: teacher.department)
-            }
-        }
-        .padding(14)
-        .background(JWColor.surface)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .padding(.bottom, 6)
     }
 
     private func teacherMetaPill(icon: String, text: String) -> some View {
@@ -224,28 +198,6 @@ struct TeacherDetailPage: View {
                 .stroke(JWColor.divider, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-
-    private func teacherMetaStat(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(JWColor.textMuted)
-            Text(value)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(JWColor.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.82)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
-        .background(JWColor.appBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(JWColor.divider, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var featureCard: some View {

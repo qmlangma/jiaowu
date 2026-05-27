@@ -4,10 +4,16 @@ struct AlertPanelView: View {
     var title: String = "异常提醒"
     var alerts: [WorkspaceAlert]
     var showSurnameIndex = false
+    var showOnlyUncontactedToggle = false
+    var onlyUncontacted = false
     var collapse: () -> Void
+    var toggleOnlyUncontacted: () -> Void = {}
+    var openStudentDetailAction: (WorkspaceAlert) -> Void
     var contactAction: (WorkspaceAlert) -> Void
     var markAction: (WorkspaceAlert) -> Void
     var quickSignAction: (WorkspaceAlert) -> Void
+    var rescheduleAction: (WorkspaceAlert) -> Void
+    var transferAction: (WorkspaceAlert) -> Void
 
     private var groupedAlerts: [AlertGroup] {
         guard showSurnameIndex else {
@@ -55,6 +61,26 @@ struct AlertPanelView: View {
                     Text(title)
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(JWColor.text)
+                    Text("\(alerts.count)")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(JWColor.primary)
+                        .padding(.horizontal, 9)
+                        .frame(height: 26)
+                        .background(JWColor.primaryLight)
+                        .clipShape(Capsule())
+                    if showOnlyUncontactedToggle {
+                        Button(action: toggleOnlyUncontacted) {
+                            HStack(spacing: 6) {
+                                Image(systemName: onlyUncontacted ? "checkmark.square.fill" : "square")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(onlyUncontacted ? JWColor.primary : JWColor.textMuted)
+                                Text("仅看未联系")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(JWColor.textMuted)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 Spacer()
                 Button(action: collapse) {
@@ -75,7 +101,7 @@ struct AlertPanelView: View {
             }
 
             ScrollViewReader { proxy in
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .bottom, spacing: 8) {
                     ScrollView(showsIndicators: false) {
                         if alerts.isEmpty {
                             Text("暂无相关提醒")
@@ -97,9 +123,12 @@ struct AlertPanelView: View {
                                         ForEach(group.alerts) { alert in
                                             AlertCardView(
                                                 alert: alert,
+                                                openStudentDetailAction: { openStudentDetailAction(alert) },
                                                 contactAction: { contactAction(alert) },
                                                 markAction: { markAction(alert) },
-                                                quickSignAction: { quickSignAction(alert) }
+                                                quickSignAction: { quickSignAction(alert) },
+                                                rescheduleAction: { rescheduleAction(alert) },
+                                                transferAction: { transferAction(alert) }
                                             )
                                         }
                                     }
@@ -127,7 +156,7 @@ struct AlertPanelView: View {
                         .padding(.vertical, 8)
                         .background(JWColor.appBackground)
                         .clipShape(Capsule())
-                        .padding(.trailing, 2)
+                        .padding(.bottom, 4)
                     }
                 }
             }

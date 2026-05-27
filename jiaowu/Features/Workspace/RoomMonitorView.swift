@@ -72,11 +72,12 @@ struct RoomMonitorView: View {
                         ForEach(filteredSessions) { session in
                             RoomCardView(
                                 session: session,
-                                viewClass: { viewClass(session) },
-                                viewRoster: { viewRoster(session) },
-                                reserveRoom: { reserveRoom(session) },
-                                callTeacher: { callTeacher(session) },
-                                callAssistant: { callAssistant(session) }
+                                selectedPeriod: selectedPeriod,
+                                viewClass: viewClass,
+                                viewRoster: viewRoster,
+                                reserveRoom: reserveRoom,
+                                callTeacher: callTeacher,
+                                callAssistant: callAssistant
                             )
                         }
                     }
