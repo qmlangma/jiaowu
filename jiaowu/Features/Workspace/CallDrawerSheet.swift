@@ -41,6 +41,10 @@ struct CallDrawerSheet: View {
         )
     }
 
+    private var miniProgramLoginPhone: String {
+        store.currentStaff?.phone ?? "13067899878"
+    }
+
     private var trimmedLandlineNumber: String {
         landlineNumber.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -303,7 +307,7 @@ struct CallDrawerSheet: View {
                         .stroke(JWColor.divider, lineWidth: 1)
                 )
 
-            Text("请使用伴学田小程序扫码拨打")
+            Text("请使用 \(miniProgramLoginPhone) 登录伴学田小程序扫码拨打")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(JWColor.text)
         }
@@ -375,30 +379,6 @@ struct CallDrawerSheet: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(JWColor.text)
                 Spacer(minLength: 0)
-                if recordCall {
-                    Label("已录制 \(recordingSeconds) s", systemImage: "waveform")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(JWColor.success)
-                    Button("停止录音") {
-                        recordCall = false
-                    }
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(JWColor.danger)
-                    .buttonStyle(.plain)
-                } else {
-                    Button {
-                        recordingSeconds = 0
-                        recordCall = true
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "mic.fill")
-                            Text("开启录音")
-                        }
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(JWColor.primary)
-                    }
-                    .buttonStyle(.plain)
-                }
             }
 
             HStack(spacing: 8) {
@@ -414,16 +394,35 @@ struct CallDrawerSheet: View {
             if shouldShowRecordingFile {
                 recordingFilePlaceholder
             }
-            TextEditor(text: noteBinding)
-                .font(.system(size: 14, weight: .medium))
-                .frame(height: 74)
-                .padding(8)
-                .background(JWColor.surface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(JWColor.divider, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            ZStack(alignment: .bottomTrailing) {
+                TextEditor(text: noteBinding)
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(height: 84)
+                    .padding(.top, 8)
+                    .padding(.leading, 8)
+                    .padding(.trailing, 42)
+                    .padding(.bottom, 8)
+                    .background(JWColor.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(JWColor.divider, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                Button {
+                    store.toast = "语音转文字"
+                } label: {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(JWColor.primary)
+                        .frame(width: 30, height: 30)
+                        .background(JWColor.primaryLight)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 8)
+                .padding(.bottom, 8)
+            }
 
             Button {
                 syncNoteToStudentProfile.toggle()

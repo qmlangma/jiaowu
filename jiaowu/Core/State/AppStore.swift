@@ -15,6 +15,8 @@ struct UIFeedback: Identifiable {
 
 @Observable
 final class AppStore {
+    private let mockLoginPhone = "13067510619"
+
     var route: AppRoute = .workspace
     var isLoggedIn = false
     var campuses: [Campus] = []
@@ -103,7 +105,7 @@ final class AppStore {
     func login(campus: Campus) {
         currentCampus = campus
         UserDefaults.standard.set(campus.id.uuidString, forKey: Self.lastWorkCampusIDKey)
-        currentStaff = StaffUser(name: "许艳博", campusName: campus.name)
+        currentStaff = StaffUser(name: "许艳博", campusName: campus.name, phone: mockLoginPhone)
         isLoggedIn = true
         route = .workspace
         navigationState.selectedRoute = .workspace
@@ -122,7 +124,7 @@ final class AppStore {
         isLoggedIn = true
         route = .workspace
         navigationState.selectedRoute = .workspace
-        currentStaff = StaffUser(name: "许艳博", campusName: currentCampus?.name ?? "Campus")
+        currentStaff = StaffUser(name: "许艳博", campusName: currentCampus?.name ?? "Campus", phone: mockLoginPhone)
         pendingCampusSelectionID = currentCampus?.id
         shouldPresentCampusDialog = false
     }
@@ -132,7 +134,7 @@ final class AppStore {
               let campus = campuses.first(where: { $0.id == id }) else { return }
         currentCampus = campus
         UserDefaults.standard.set(campus.id.uuidString, forKey: Self.lastWorkCampusIDKey)
-        currentStaff = StaffUser(name: "许艳博", campusName: campus.name)
+        currentStaff = StaffUser(name: "许艳博", campusName: campus.name, phone: mockLoginPhone)
         shouldPresentCampusDialog = false
     }
 

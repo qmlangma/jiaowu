@@ -8,7 +8,7 @@ struct WorkspaceView: View {
     @State private var selectedPeriod: WorkspaceTimePeriod = WorkspaceTimePeriod.autoByCurrentTime()
     @State private var selectedDate = WorkspaceMockData.today
     @State private var selectedFloor: RoomFloor = .all
-    @State private var hideIdleRooms = true
+    @State private var onlyIdleRooms = false
     @State private var reservedRooms: Set<UUID> = []
     @State private var reservationDraft: RoomReservationDraft?
     @State private var selectedStudent: WorkspaceStudentResult?
@@ -57,13 +57,6 @@ struct WorkspaceView: View {
                                     isSearchPagePresented = true
                                 }
                             },
-                            openAlerts: {
-                                withAnimation(.easeInOut(duration: 0.22)) {
-                                    store.workspaceAlertDrawerFilter = .all
-                                    store.workspaceAlertDrawerVisible = false
-                                    store.workspaceAlertDrawerPresented = true
-                                }
-                            },
                             openSummary: handleSummaryTap,
                             requestAlarmConfirm: {
                                 if store.workspaceAlarmOn {
@@ -73,7 +66,6 @@ struct WorkspaceView: View {
                                     store.shouldPresentAlarmConfirm = true
                                 }
                             },
-                            hasUnreadAlerts: store.workspaceAlerts.contains(where: { !$0.isContacted }),
                             alarmOn: Binding(
                                 get: { store.workspaceAlarmOn },
                                 set: { store.workspaceAlarmOn = $0 }
@@ -89,7 +81,7 @@ struct WorkspaceView: View {
                             selectedPeriod: $selectedPeriod,
                             sessions: roomSessions,
                             selectedFloor: $selectedFloor,
-                            hideIdleRooms: $hideIdleRooms,
+                            onlyIdleRooms: $onlyIdleRooms,
                             openScheduleTab: { store.navigate(.schedule) },
                             viewClass: { store.workspaceSelectedRosterSession = $0 },
                             viewRoster: { store.workspaceSelectedRosterSession = $0 },

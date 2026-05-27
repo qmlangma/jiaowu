@@ -3,10 +3,10 @@ import SwiftUI
 
 enum AppRoute: String, CaseIterable, Identifiable {
     case workspace = "工作台"
-    case assessment = "入学诊断"
+    case assessment = "诊断"
     case courseSelection = "选课"
     case schedule = "课表"
-    case orders = "订单"
+    case orders = "活动"
     case students = "学员"
     case attendance = "审批"
 
@@ -59,12 +59,20 @@ struct StaffUser: Identifiable, Hashable {
     let id: UUID
     var name: String
     var campusName: String
+    var phone: String
     var avatarSymbol: String
 
-    init(id: UUID = UUID(), name: String, campusName: String, avatarSymbol: String = "person.crop.circle.fill") {
+    init(
+        id: UUID = UUID(),
+        name: String,
+        campusName: String,
+        phone: String = "13067510619",
+        avatarSymbol: String = "person.crop.circle.fill"
+    ) {
         self.id = id
         self.name = name
         self.campusName = campusName
+        self.phone = phone
         self.avatarSymbol = avatarSymbol
     }
 }

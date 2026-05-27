@@ -5,9 +5,10 @@ enum WorkspaceMockData {
     static let today = Date()
 
     static let summaries: [WorkspaceSummary] = [
-        WorkspaceSummary(title: "今日缺勤学员", value: "4", tint: JWColor.warning, symbol: "person.fill.xmark"),
+        WorkspaceSummary(title: "今日缺勤学员", value: "15", tint: JWColor.warning, symbol: "person.fill.xmark"),
         WorkspaceSummary(title: "今日缺勤老师", value: "1", tint: JWColor.danger, symbol: "exclamationmark.triangle.fill"),
-        WorkspaceSummary(title: "今日缺勤助教", value: "2", tint: JWColor.caution, symbol: "person.2.fill")
+        WorkspaceSummary(title: "今日缺勤助教", value: "2", tint: JWColor.caution, symbol: "person.2.fill"),
+        WorkspaceSummary(title: "近期新增学员", value: "8", tint: JWColor.primary, symbol: "person.crop.badge.plus")
     ]
 
     static let quickActions: [WorkspaceQuickAction] = [
@@ -56,10 +57,24 @@ enum WorkspaceMockData {
     ]
 
     static let alerts: [WorkspaceAlert] = [
-        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "冯宇轩", detail: "图形化编程 B 班 · 周老师", timeDetail: "未到 18 分钟", phone: "186****5801", actionTitle: "联系家长"),
-        WorkspaceAlert(priority: .high, category: "老师缺勤", contactName: "陈老师", detail: "Scratch 启蒙 A 班", timeDetail: "18:30 未签到", phone: "138****8120", actionTitle: "联系老师"),
-        WorkspaceAlert(priority: .medium, category: "学生迟到", contactName: "李泽宇", detail: "Scratch 启蒙 A 班 · 陈老师", timeDetail: "迟到 12 分钟", phone: "180****3001", actionTitle: "联系家长"),
-        WorkspaceAlert(priority: .medium, category: "助教缺勤", contactName: "林助教", detail: "二年级信息学算法晚班", timeDetail: "待确认", phone: "139****7721", actionTitle: "联系助教")
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "安可心", detail: "课堂签到异常", timeDetail: "未到 18 分钟", phone: "186****5801", actionTitle: "联系家长", studentNumber: "STU240501", className: "图形化编程 B 班", classTeacher: "周老师", classroom: "A103", lateTime: "迟到 18 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "白芷晴", detail: "课堂签到异常", timeDetail: "未到 11 分钟", phone: "180****3001", actionTitle: "联系家长", studentNumber: "STU240502", className: "Scratch 启蒙 A 班", classTeacher: "陈老师", classroom: "A102", lateTime: "迟到 11 分钟"),
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "陈俊豪", detail: "课堂签到异常", timeDetail: "未到 23 分钟", phone: "133****0921", actionTitle: "联系家长", studentNumber: "STU240503", className: "二年级信息学算法晚班", classTeacher: "杨老师", classroom: "A101", lateTime: "迟到 23 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "杜若溪", detail: "课堂签到异常", timeDetail: "未到 9 分钟", phone: "151****2290", actionTitle: "联系家长", studentNumber: "STU240504", className: "一年级逻辑思维课", classTeacher: "顾老师", classroom: "A104", lateTime: "迟到 9 分钟"),
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "冯宇轩", detail: "课堂签到异常", timeDetail: "未到 18 分钟", phone: "186****5801", actionTitle: "联系家长", studentNumber: "STU240505", className: "图形化编程 B 班", classTeacher: "周老师", classroom: "A103", lateTime: "迟到 18 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "高一诺", detail: "课堂签到异常", timeDetail: "未到 7 分钟", phone: "177****3328", actionTitle: "联系家长", studentNumber: "STU240506", className: "小升初算法集训", classTeacher: "邢老师", classroom: "C305", lateTime: "迟到 7 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "何梓晨", detail: "课堂签到异常", timeDetail: "未到 10 分钟", phone: "182****4136", actionTitle: "联系家长", studentNumber: "STU240507", className: "机器人搭建社团", classTeacher: "段老师", classroom: "C303", lateTime: "迟到 10 分钟"),
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "李泽宇", detail: "课堂签到异常", timeDetail: "未到 16 分钟", phone: "180****3001", actionTitle: "联系家长", studentNumber: "STU240508", className: "Scratch 启蒙 A 班", classTeacher: "陈老师", classroom: "A102", lateTime: "迟到 16 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "马嘉禾", detail: "课堂签到异常", timeDetail: "未到 8 分钟", phone: "136****1920", actionTitle: "联系家长", studentNumber: "STU240509", className: "C++ 基础提高班", classTeacher: "周老师", classroom: "B201", lateTime: "迟到 8 分钟"),
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "潘昊然", detail: "课堂签到异常", timeDetail: "未到 21 分钟", phone: "138****6507", actionTitle: "联系家长", studentNumber: "STU240510", className: "一年级思维训练", classTeacher: "刘老师", classroom: "B203", lateTime: "迟到 21 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "钱思远", detail: "课堂签到异常", timeDetail: "未到 13 分钟", phone: "189****7412", actionTitle: "联系家长", studentNumber: "STU240511", className: "入学诊断现场测评", classTeacher: "陈明明", classroom: "A102", lateTime: "迟到 13 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "沈语彤", detail: "课堂签到异常", timeDetail: "未到 6 分钟", phone: "135****3384", actionTitle: "联系家长", studentNumber: "STU240512", className: "图形化编程启蒙", classTeacher: "孙老师", classroom: "C304", lateTime: "迟到 6 分钟"),
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "王启航", detail: "课堂签到异常", timeDetail: "未到 19 分钟", phone: "139****0287", actionTitle: "联系家长", studentNumber: "STU240513", className: "二年级信息学算法晚班", classTeacher: "杨老师", classroom: "A101", lateTime: "迟到 19 分钟"),
+        WorkspaceAlert(priority: .medium, category: "学生未到", contactName: "徐沐阳", detail: "课堂签到异常", timeDetail: "未到 12 分钟", phone: "181****5540", actionTitle: "联系家长", studentNumber: "STU240514", className: "Python 体验活动", classTeacher: "罗老师", classroom: "A103", lateTime: "迟到 12 分钟"),
+        WorkspaceAlert(priority: .high, category: "学生未到", contactName: "张一帆", detail: "课堂签到异常", timeDetail: "未到 24 分钟", phone: "187****1669", actionTitle: "联系家长", studentNumber: "STU240515", className: "算法竞赛冲刺班", classTeacher: "朱老师", classroom: "B204", lateTime: "迟到 24 分钟"),
+        WorkspaceAlert(priority: .high, category: "老师缺勤", contactName: "陈老师", detail: "课堂签到异常", timeDetail: "18:30 未签到", phone: "138****8120", actionTitle: "联系老师", staffNumber: "TEA0821", className: "Scratch 启蒙 A 班", classTeacher: "陈老师", classroom: "A102", lateTime: "迟到 30 分钟"),
+        WorkspaceAlert(priority: .medium, category: "助教缺勤", contactName: "林助教", detail: "课堂签到异常", timeDetail: "待确认", phone: "139****7721", actionTitle: "联系助教", staffNumber: "AST1017", className: "二年级信息学算法晚班", classTeacher: "杨老师", classroom: "A101", lateTime: "迟到 15 分钟"),
+        WorkspaceAlert(priority: .medium, category: "助教缺勤", contactName: "王助教", detail: "课堂签到异常", timeDetail: "待确认", phone: "139****9048", actionTitle: "联系助教", staffNumber: "AST1103", className: "小升初算法集训", classTeacher: "邢老师", classroom: "C305", lateTime: "迟到 9 分钟")
     ]
 
     static let leavingRecords: [StudentLeavingRecord] = [
@@ -255,7 +270,21 @@ struct WorkspaceAlert: Identifiable {
     var timeDetail: String
     var phone: String
     var actionTitle: String
+    var studentNumber: String? = nil
+    var staffNumber: String? = nil
+    var className: String? = nil
+    var classTeacher: String? = nil
+    var classroom: String? = nil
+    var lateTime: String? = nil
     var isContacted: Bool = false
+
+    var isStudentAlert: Bool {
+        category.contains("学生") || category.contains("学员")
+    }
+
+    var isStaffAlert: Bool {
+        category.contains("老师") || category.contains("助教")
+    }
 }
 
 struct StudentLeavingRecord: Identifiable {

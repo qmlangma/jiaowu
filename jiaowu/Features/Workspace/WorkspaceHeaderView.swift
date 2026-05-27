@@ -5,10 +5,8 @@ struct WorkspaceHeaderView: View {
     var summaries: [WorkspaceSummary]
     var openCampus: () -> Void
     var openSearch: () -> Void
-    var openAlerts: () -> Void
     var openSummary: (WorkspaceSummary) -> Void
     var requestAlarmConfirm: () -> Void
-    var hasUnreadAlerts: Bool
     @Binding var alarmOn: Bool
 
     private var summaryColumns: [GridItem] {
@@ -48,27 +46,6 @@ struct WorkspaceHeaderView: View {
 
                 WorkspaceSearchBar(action: openSearch)
                     .frame(width: 520)
-                Button(action: openAlerts) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(Color.yellow))
-                        .overlay(Circle().stroke(Color.white.opacity(0.28), lineWidth: 1))
-                        .overlay(alignment: .topTrailing) {
-                            if hasUnreadAlerts {
-                                Circle()
-                                    .fill(JWColor.danger)
-                                    .frame(width: 10, height: 10)
-                                    .overlay(
-                                        Circle().stroke(Color.white, lineWidth: 1.5)
-                                    )
-                                    .offset(x: 1, y: -1)
-                            }
-                        }
-                        .shadow(color: Color.black.opacity(0.14), radius: 8, x: 0, y: 4)
-                }
-                .buttonStyle(.plain)
             }
 
             LazyVGrid(columns: summaryColumns, spacing: AppSpacing.small) {
@@ -120,7 +97,7 @@ private struct HeaderToggleIcon: View {
     private var iconName: String {
         switch kind {
         case .alarm:
-            return "exclamationmark.shield.fill"
+            return "lightbulb.fill"
         case .light:
             return "lightbulb.fill"
         case .network:

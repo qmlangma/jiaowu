@@ -4,7 +4,7 @@ struct RoomMonitorView: View {
     @Binding var selectedPeriod: WorkspaceTimePeriod
     var sessions: [RoomSession]
     @Binding var selectedFloor: RoomFloor
-    @Binding var hideIdleRooms: Bool
+    @Binding var onlyIdleRooms: Bool
     var openScheduleTab: () -> Void
     var viewClass: (RoomSession) -> Void
     var viewRoster: (RoomSession) -> Void
@@ -31,7 +31,7 @@ struct RoomMonitorView: View {
     @State private var hasCapturedInitialFilters = false
     @State private var initialPeriod: WorkspaceTimePeriod = .morning
     @State private var initialFloor: RoomFloor = .all
-    @State private var initialHideIdleRooms = true
+    @State private var initialOnlyIdleRooms = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -92,7 +92,7 @@ struct RoomMonitorView: View {
             hasCapturedInitialFilters = true
             initialPeriod = selectedPeriod
             initialFloor = selectedFloor
-            initialHideIdleRooms = hideIdleRooms
+            initialOnlyIdleRooms = onlyIdleRooms
         }
         .fullScreenCover(isPresented: $isCourseFilterDrawerPresented) {
             ZStack {
@@ -158,10 +158,10 @@ struct RoomMonitorView: View {
 
     private var hideIdleToggle: some View {
         HStack(spacing: 8) {
-            Text("隐藏空教室")
+            Text("仅看空教室")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(JWColor.textMuted)
-            Toggle("", isOn: $hideIdleRooms)
+            Toggle("", isOn: $onlyIdleRooms)
                 .labelsHidden()
                 .tint(JWColor.primary)
         }
@@ -340,7 +340,7 @@ struct RoomMonitorView: View {
         selection: Binding<String>,
         isOptionEnabled: @escaping (String) -> Bool = { _ in true }
     ) -> some View {
-        let optionColumns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
+        let optionColumns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
         return LazyVGrid(columns: optionColumns, alignment: .leading, spacing: 10) {
             ForEach(options, id: \.self) { option in
                 let enabled = isOptionEnabled(option)
@@ -418,7 +418,7 @@ struct RoomMonitorView: View {
     private var filteredSessions: [RoomSession] {
         sessions.filter { session in
             let matchesFloor = selectedFloor == .all || session.floor == selectedFloor
-            let matchesIdle = !hideIdleRooms || session.status != .idle
+            let matchesIdle = onlyIdleRooms ? session.status == .idle : session.status != .idle
             let matchesSubject = selectedSubjectFilter == allSubject || subjectTag(for: session) == selectedSubjectFilter
             let matchesGrade = selectedGradeFilter == allGrade || gradeTag(for: session) == selectedGradeFilter
             return matchesFloor && matchesIdle && matchesSubject && matchesGrade
@@ -427,7 +427,7 @@ struct RoomMonitorView: View {
 
     private var hasActiveFilters: Bool {
         selectedFloor != initialFloor ||
-        hideIdleRooms != initialHideIdleRooms ||
+        onlyIdleRooms != initialOnlyIdleRooms ||
         selectedSubjectFilter != allSubject ||
         selectedGradeFilter != allGrade ||
         selectedPeriod != initialPeriod
@@ -436,7 +436,7 @@ struct RoomMonitorView: View {
     private func resetFiltersToInitialState() {
         selectedPeriod = initialPeriod
         selectedFloor = initialFloor
-        hideIdleRooms = initialHideIdleRooms
+        onlyIdleRooms = initialOnlyIdleRooms
         selectedSubjectFilter = allSubject
         selectedGradeFilter = allGrade
         draftSubjectFilter = allSubject

@@ -121,6 +121,7 @@ private struct AppShell: View {
                 AlertPanelView(
                     title: store.workspaceAlertDrawerFilter.title,
                     alerts: workspaceFilteredAlerts,
+                    showSurnameIndex: store.workspaceAlertDrawerFilter == .absentStudent,
                     collapse: dismissWorkspaceAlertDrawer,
                     contactAction: { alert in
                         let role: CallTargetRole = alert.actionTitle.contains("老师") ? .teacher : (alert.actionTitle.contains("助教") ? .assistant : .student)
@@ -129,11 +130,11 @@ private struct AppShell: View {
                     markAction: markWorkspaceAlertAsContacted,
                     quickSignAction: quickSignWorkspaceAlert
                 )
-                .frame(width: 344)
+                .frame(width: 468)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .padding(.trailing, 8)
                 .padding(.vertical, 20)
-                .offset(x: store.workspaceAlertDrawerVisible ? 0 : 360)
+                .offset(x: store.workspaceAlertDrawerVisible ? 0 : 484)
             }
             .onAppear {
                 withAnimation(.easeOut(duration: 0.24)) {
@@ -185,7 +186,7 @@ private struct AppShell: View {
 
     private func quickSignWorkspaceAlert(_ alert: WorkspaceAlert) {
         guard alert.category.contains("学生") else { return }
-        store.toast = "已为\(alert.contactName)执行快速签到"
+        store.toast = "已为\(alert.contactName)完成签到"
         markWorkspaceAlertAsContacted(alert)
     }
 
@@ -293,7 +294,7 @@ private struct CampusPickerFullScreen: View {
 private struct CampusPickDialog: View {
     @Environment(AppStore.self) private var store
     @State private var selectedRegion = "包河区"
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 5)
     private let regionOrder = ["包河区", "滨湖区", "庐阳区", "蜀山区", "瑶海区", "政务文化新区", "其他"]
 
     private var campusesByRegion: [(region: String, campuses: [Campus])] {
@@ -306,15 +307,15 @@ private struct CampusPickDialog: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 26) {
             Capsule()
                 .fill(JWColor.divider)
                 .frame(width: 48, height: 6)
                 .frame(maxWidth: .infinity)
-                .padding(.top, 8)
+                .padding(.top, 12)
 
             HStack(spacing: 12) {
-                Label("选择工作校区", systemImage: "location.fill")
+                Label("切换校区", systemImage: "location.fill")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(JWColor.text)
                 Spacer()
@@ -330,9 +331,10 @@ private struct CampusPickDialog: View {
                 }
                 .buttonStyle(.plain)
             }
+            .padding(.bottom, 4)
 
             ScrollViewReader { proxy in
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     ForEach(regionOrder, id: \.self) { region in
                         Button {
                             selectedRegion = region
@@ -357,18 +359,19 @@ private struct CampusPickDialog: View {
                         .buttonStyle(.plain)
                     }
                 }
+                .padding(.bottom, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 24) {
                         ForEach(campusesByRegion, id: \.region) { section in
-                            VStack(alignment: .leading, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 12) {
                                 Text(section.region)
                                     .font(.system(size: 18, weight: .bold))
                                     .foregroundStyle(JWColor.text)
                                     .id(section.region)
 
-                                LazyVGrid(columns: columns, spacing: 10) {
+                                LazyVGrid(columns: columns, spacing: 12) {
                                     ForEach(section.campuses) { campus in
                                         CampusGridItem(
                                             name: campus.name,
@@ -388,14 +391,14 @@ private struct CampusPickDialog: View {
                             }
                         }
                     }
-                    .padding(.top, 4)
+                    .padding(.top, 8)
                 }
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(.horizontal, 18)
-        .padding(.top, 16)
-        .padding(.bottom, 22)
+        .padding(.horizontal, 26)
+        .padding(.top, 20)
+        .padding(.bottom, 30)
         .background(JWColor.surface)
     }
 }
@@ -411,14 +414,12 @@ private struct CampusGridItem: View {
                 Text(name)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(JWColor.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(JWColor.primary)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(JWColor.textMuted)
                 }
             }
             .padding(.horizontal, 12)
@@ -439,7 +440,7 @@ private struct SidebarView: View {
     @Binding var isCollapsed: Bool
     var openScanner: () -> Void
     @State private var isLogoutConfirmPresented = false
-    private let primaryRoutes: [AppRoute] = [.workspace, .students, .assessment, .courseSelection, .schedule, .orders, .attendance]
+    private let primaryRoutes: [AppRoute] = [.workspace, .students, .assessment, .courseSelection, .orders, .schedule]
 
     var body: some View {
         let edgeInset: CGFloat = 14

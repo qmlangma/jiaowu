@@ -41,7 +41,7 @@ struct QuickActionGridView: View {
 
     private func actionSubtitle(for kind: WorkspaceQuickActionKind) -> String {
         switch kind {
-        case .assessment: "安排测评 · 自动提醒"
+        case .assessment: "新增测评，获取级别"
         case .enrollCourse: "课程规划 · 报名缴费"
         case .activityQRCode: "快速出示 · 家长扫码"
         case .newStudent: "录入档案 · 快速建档"
