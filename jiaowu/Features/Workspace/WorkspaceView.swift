@@ -2,200 +2,216 @@ import SwiftUI
 
 struct WorkspaceView: View {
     @Environment(AppStore.self) private var store
+    @State private var searchText = ""
+    @State private var isSearchPagePresented = false
+    @State private var recentSearches = ["张明明", "A101", "二年级信息学算法晚班", "李梓轩", "陈老师", "138****5621", "Python 体验活动"]
+    @State private var selectedPeriod: WorkspaceTimePeriod = WorkspaceTimePeriod.autoByCurrentTime()
+    @State private var selectedDate = WorkspaceMockData.today
+    @State private var selectedFloor: RoomFloor = .all
+    @State private var hideIdleRooms = true
+    @State private var reservedRooms: Set<UUID> = []
+    @State private var reservationDraft: RoomReservationDraft?
+    @State private var selectedStudent: WorkspaceStudentResult?
+    @State private var selectedSession: RoomSession?
+
+    private var roomSessions: [RoomSession] {
+        WorkspaceMockData.roomSessions.map { session in
+            var next = session
+            if reservedRooms.contains(session.id), session.status == .idle {
+                next.status = .notStarted
+                next.sessionType = .assessment
+                next.className = "临时预约"
+                next.teacher = store.currentStaff?.name ?? "教务老师"
+            }
+            return next
+        }
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center) {
-                HStack(alignment: .center, spacing: 10) {
-                    Text("工作台")
-                        .font(.system(size: 46, weight: .bold))
-                    Button {
-                        store.pendingCampusSelectionID = store.currentCampus?.id
-                        store.shouldPresentCampusDialog = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "mappin.and.ellipse")
-                            Text(store.currentCampus?.name ?? "请选择校区")
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 11, weight: .bold))
+        ZStack(alignment: .topLeading) {
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: AppSpacing.large) {
+                    if isSearchPagePresented {
+                        WorkspaceSearchPage(
+                            query: $searchText,
+                            recentSearches: $recentSearches,
+                            studentResults: WorkspaceMockData.studentResults,
+                            teacherResults: WorkspaceMockData.teacherResults,
+                            classResults: WorkspaceMockData.classResults,
+                            cancel: { isSearchPagePresented = false },
+                            submit: handleWorkspaceSearch,
+                            openStudent: { selectedStudent = $0 },
+                            openTeacher: { store.workspaceSelectedTeacherProfile = makeTeacherProfile(from: $0) },
+                            openClass: { store.workspaceSelectedRosterSession = $0.session }
+                        )
+                    } else {
+                        WorkspaceHeaderView(
+                            campusName: store.currentCampus?.name ?? "请选择校区",
+                            summaries: WorkspaceMockData.summaries,
+                            openCampus: {
+                                store.pendingCampusSelectionID = store.currentCampus?.id
+                                store.shouldPresentCampusDialog = true
+                            },
+                            openSearch: {
+                                withAnimation(.easeInOut(duration: 0.22)) {
+                                    isSearchPagePresented = true
+                                }
+                            },
+                            openAlerts: {
+                                withAnimation(.easeInOut(duration: 0.22)) {
+                                    store.workspaceAlertDrawerFilter = .all
+                                    store.workspaceAlertDrawerVisible = false
+                                    store.workspaceAlertDrawerPresented = true
+                                }
+                            },
+                            openSummary: handleSummaryTap,
+                            requestAlarmConfirm: { store.shouldPresentAlarmConfirm = true },
+                            hasUnreadAlerts: store.workspaceAlerts.contains(where: { !$0.isContacted }),
+                            alarmOn: Binding(
+                                get: { store.workspaceAlarmOn },
+                                set: { store.workspaceAlarmOn = $0 }
+                            )
+                        )
+
+                        QuickActionGridView(
+                            actions: WorkspaceMockData.quickActions,
+                            handleAction: handleQuickAction
+                        )
+
+                        RoomMonitorView(
+                            selectedPeriod: $selectedPeriod,
+                            sessions: roomSessions,
+                            selectedFloor: $selectedFloor,
+                            hideIdleRooms: $hideIdleRooms,
+                            openScheduleTab: { store.navigate(.schedule) },
+                            viewClass: { store.workspaceSelectedRosterSession = $0 },
+                            viewRoster: { store.workspaceSelectedRosterSession = $0 },
+                            reserveRoom: { reservationDraft = RoomReservationDraft(room: $0.roomName, dateText: selectedDate.displayText, period: selectedPeriod.title) },
+                            callTeacher: { session in
+                                store.openCallDrawer(
+                                    role: .teacher,
+                                    name: session.teacher ?? "老师",
+                                    phone: session.teacherPhone ?? "--"
+                                )
+                            },
+                            callAssistant: { session in
+                                store.openCallDrawer(
+                                    role: .assistant,
+                                    name: session.assistant ?? "助教",
+                                    phone: session.assistantPhone ?? "--"
+                                )
+                            }
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.bottom, 20)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            if let reservationDraft {
+                RoomReservationSheet(
+                    draft: reservationDraft,
+                    close: { self.reservationDraft = nil },
+                    submit: { draft in
+                        if let room = WorkspaceMockData.roomSessions.first(where: { $0.roomName == draft.room }) {
+                            reservedRooms.insert(room.id)
                         }
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(JWColor.primary)
-                        .padding(.horizontal, 12)
-                        .frame(height: 36)
-                        .background(JWColor.primaryLight)
-                        .clipShape(Capsule())
+                        self.reservationDraft = nil
+                        store.toast = "\(draft.room) 已预约"
                     }
-                    .buttonStyle(.plain)
-                }
-                Spacer(minLength: 0)
-                HStack(alignment: .center, spacing: 10) {
-                    SecondaryButton(title: "扫码", systemImage: "qrcode.viewfinder") { store.toast = "扫码页为前端占位" }
-                        .frame(height: 44)
-                    PrimaryButton(title: "快速报名", systemImage: "plus") { store.navigate(.courseSelection) }
-                        .frame(width: 140, height: 44)
-                }
+                )
             }
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5), spacing: 12) {
-                MetricCard(title: "今日测试班", value: "\(store.testSessions.count)", tint: JWColor.primary, systemImage: "doc.text")
-                MetricCard(title: "待跟进学员", value: "\(store.unpaidAttendanceCount)", tint: JWColor.danger, systemImage: "person.crop.circle.badge.exclamationmark")
-                MetricCard(title: "待批改", value: "\(store.pendingReviewCount)", tint: JWColor.warning, systemImage: "pencil.and.outline")
-                MetricCard(title: "待处理订单", value: "\(store.paidOrders.count)", tint: JWColor.accent, systemImage: "creditcard")
-                MetricCard(title: "未考勤预警", value: "\(store.unpaidAttendanceCount)", tint: JWColor.warning, systemImage: "bell.badge")
+            if let selectedStudent {
+                StudentQuickDetailSheet(
+                    student: selectedStudent,
+                    close: { self.selectedStudent = nil },
+                    enroll: {
+                        self.selectedStudent = nil
+                        store.navigate(.courseSelection)
+                    },
+                    assessment: {
+                        self.selectedStudent = nil
+                        store.navigate(.assessment)
+                    }
+                )
             }
 
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionTitle(title: "今日测试班", actionTitle: "课表") { store.navigate(.schedule) }
-                    ForEach(store.testSessions) { session in
-                        Button {
-                            store.selectedTestSessionID = session.id
-                            store.navigate(.schedule)
-                        } label: {
-                            TestSessionRow(session: session)
-                        }
-                        .buttonStyle(.plain)
+            if let selectedSession {
+                ClassSessionDetailSheet(
+                    session: selectedSession,
+                    close: { self.selectedSession = nil },
+                    openSchedule: {
+                        self.selectedSession = nil
+                        store.navigate(.schedule)
+                    },
+                    openAttendance: {
+                        self.selectedSession = nil
+                        store.navigate(.attendance)
                     }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(16)
-                .background(JWColor.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionTitle(title: "待办提醒", actionTitle: nil)
-                    VStack(spacing: 2) {
-                        TaskRow(title: "试卷人工复核", detail: "\(store.pendingReviewCount) 名学员存在 OCR/AI 待判题", tint: JWColor.warning)
-                        TaskRow(title: "未打卡提醒", detail: "\(store.unpaidAttendanceCount) 条考勤需要处理", tint: JWColor.danger)
-                        TaskRow(title: "退款确认", detail: "\(store.paidOrders.count) 笔已付款订单可发起退款", tint: JWColor.success)
-                    }
-                }
-                .frame(width: 430)
-                .frame(maxHeight: .infinity, alignment: .topLeading)
-                .padding(16)
-                .background(JWColor.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(JWColor.divider))
+                )
             }
 
-            AppCard {
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionTitle(title: "快捷入口", actionTitle: nil)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                        QuickEntryButton(title: "学员检索", symbol: "magnifyingglass") { store.navigate(.students) }
-                        QuickEntryButton(title: "选课报名", symbol: "checkmark.seal") { store.navigate(.courseSelection) }
-                        QuickEntryButton(title: "课表登记", symbol: "calendar.badge.plus") { store.navigate(.schedule) }
-                        QuickEntryButton(title: "考勤管理", symbol: "checkmark.circle") { store.navigate(.attendance) }
-                    }
-                }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onAppear {
+            selectedPeriod = WorkspaceTimePeriod.autoByCurrentTime()
+            if store.workspaceAlerts.isEmpty {
+                store.workspaceAlerts = WorkspaceMockData.alerts
             }
         }
     }
-}
 
-private struct QuickEntryButton: View {
-    var title: String
-    var symbol: String
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: symbol)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(JWColor.primary)
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(JWColor.text)
-            }
-            .frame(maxWidth: .infinity, minHeight: 78)
-            .background(JWColor.surfaceMuted.opacity(0.58))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    private func handleQuickAction(_ action: WorkspaceQuickAction) {
+        switch action.kind {
+        case .newStudent:
+            store.navigate(.students)
+        case .enrollCourse:
+            store.navigate(.courseSelection)
+        case .assessment:
+            store.navigate(.assessment)
+        case .activityQRCode:
+            store.toast = "已展示活动二维码，家长可扫码查看活动详情"
         }
-        .buttonStyle(.plain)
+    }
+
+    private func handleWorkspaceSearch(_ keyword: String) {
+        let value = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        store.toast = "搜索：\(value)"
+    }
+
+    private func makeTeacherProfile(from result: WorkspaceTeacherResult) -> TeacherProfile {
+        TeacherProfile(
+            name: result.name,
+            phone: "13800138001",
+            campus: store.currentCampus?.name ?? "合肥分校",
+            department: "小低教学部",
+            onboardDate: "2021-08-16",
+            yearsOfTeaching: "6年",
+            graduateSchool: "华中师范大学",
+            subjects: "小学数学 / 信息学思维",
+            tags: ["课堂节奏稳", "互动反馈快", "善于激发思考", "分层教学"],
+            motto: "让每个孩子都能找到理解知识的成就感。",
+            bio: "\(result.name)当前\(result.checkState)，今日带班\(result.todayClasses)。擅长课堂组织与学习习惯培养，注重过程反馈和成长激励。"
+        )
+    }
+
+    private func handleSummaryTap(_ summary: WorkspaceSummary) {
+        switch summary.title {
+        case "今日缺勤学员":
+            store.workspaceAlertDrawerFilter = .absentStudent
+        case "今日缺勤老师":
+            store.workspaceAlertDrawerFilter = .absentTeacher
+        case "今日缺勤助教":
+            store.workspaceAlertDrawerFilter = .absentAssistant
+        default:
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.22)) {
+            store.workspaceAlertDrawerVisible = false
+            store.workspaceAlertDrawerPresented = true
+        }
     }
 }
-
-private struct TaskRow: View {
-    var title: String
-    var detail: String
-    var tint: Color
-
-    var body: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 3).fill(tint).frame(width: 6, height: 42)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.system(size: 16, weight: .bold))
-                Text(detail).font(.system(size: 14, weight: .medium)).foregroundStyle(JWColor.textMuted)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundStyle(JWColor.textMuted)
-        }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 12)
-        .overlay(alignment: .bottom) { Rectangle().fill(JWColor.divider).frame(height: 1) }
-    }
-}
-
-private struct TestSessionRow: View {
-    var session: TestSession
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        StatusBadge(title: "测试", tint: JWColor.accent)
-                        Text(session.title)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(JWColor.text)
-                            .lineLimit(1)
-                    }
-                    HStack(spacing: 16) {
-                        Label(session.time, systemImage: "clock")
-                        Label(session.grade, systemImage: "graduationcap")
-                        Label(session.room, systemImage: "building.2")
-                        Label(session.subject, systemImage: "book")
-                    }
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(JWColor.textMuted)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(JWColor.textMuted)
-            }
-            HStack(spacing: 10) {
-                InlineMetric(label: "已报", value: "\(session.seats.count)")
-                InlineMetric(label: "已到", value: "\(session.seats.filter(\.studentCheckedIn).count)")
-                InlineMetric(label: "家长", value: "\(session.seats.filter(\.parentCheckedIn).count)")
-                StatusBadge(title: session.status, tint: JWColor.warning)
-            }
-        }
-        .padding(16)
-        .background(JWColor.surfaceMuted.opacity(0.45))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-}
-
-private struct InlineMetric: View {
-    var label: String
-    var value: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(value)
-                .font(.system(size: 18, weight: .bold))
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(JWColor.textMuted)
-        }
-        .padding(.horizontal, 10)
-        .frame(height: 32)
-        .background(JWColor.surfaceMuted)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
